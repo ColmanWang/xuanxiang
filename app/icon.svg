@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="8" fill="#f4f0e7"/>
+  <path d="M11 11h42v42H11z" fill="none" stroke="#0c4c4c" stroke-width="2"/>
+  <path d="M17 17h9M17 17v9M47 47h-9M47 47v-9" fill="none" stroke="#a84b3c" stroke-width="2"/>
+  <text x="32" y="40" text-anchor="middle" font-family="Songti SC, STSong, serif" font-size="25" fill="#0c3336">象</text>
+</svg>

@@ -1,0 +1,120 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Concept {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  aliases   String[]
+  summary   String
+  content   String?
+  dynastyId String?
+  dynasty   Dynasty? @relation(fields: [dynastyId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([dynastyId])
+}
+
+model School {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  summary   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Classic {
+  id        String   @id @default(cuid())
+  title     String
+  slug      String   @unique
+  author    String?
+  dynastyId String?
+  summary   String
+  dynasty   Dynasty? @relation(fields: [dynastyId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([dynastyId])
+}
+
+model Person {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  birthYear Int?
+  deathYear Int?
+  summary   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Technique {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  category  String
+  summary   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Dynasty {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  startYear Int?
+  endYear   Int?
+  concepts  Concept[]
+  classics  Classic[]
+}
+
+model Entity {
+  id                String     @id @default(cuid())
+  name              String
+  type              EntityType
+  summary           String
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  outgoingRelations Relation[] @relation("EntityOutgoingRelations")
+  incomingRelations Relation[] @relation("EntityIncomingRelations")
+
+  @@index([type])
+}
+
+model Relation {
+  id           String       @id @default(cuid())
+  sourceId     String
+  targetId     String
+  relationType RelationType
+  createdAt    DateTime     @default(now())
+  source       Entity       @relation("EntityOutgoingRelations", fields: [sourceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  target       Entity       @relation("EntityIncomingRelations", fields: [targetId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([sourceId, targetId, relationType])
+  @@index([sourceId, relationType])
+  @@index([targetId, relationType])
+  @@index([relationType])
+}
+
+enum EntityType {
+  CONCEPT
+  PERSON
+  BOOK
+  SCHOOL
+  TECHNIQUE
+  DYNASTY
+}
+
+enum RelationType {
+  INFLUENCED
+  DERIVED_FROM
+  BELONGS_TO
+  RELATED_TO
+  WRITTEN_BY
+}

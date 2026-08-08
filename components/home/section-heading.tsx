@@ -1,0 +1,1 @@
+export function SectionHeading({title,description}:{title:string;description?:string}){return <div className="mb-9 border-t pt-7"><h2 className="section-title">{title}</h2>{description?<p className="mt-4 max-w-2xl leading-7 text-muted-foreground">{description}</p>:null}</div>}

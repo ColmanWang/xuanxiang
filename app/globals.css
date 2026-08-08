@@ -1,0 +1,209 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #f4f0e7;
+  --foreground: #192522;
+  --card: #f8f5ed;
+  --card-foreground: #192522;
+  --primary: #0c4c4c;
+  --primary-foreground: #f4f0e7;
+  --secondary: #e5e4d9;
+  --secondary-foreground: #263d39;
+  --muted: #eae7dd;
+  --muted-foreground: #5d6965;
+  --border: #cbc9bd;
+  --ring: #1f6966;
+  --accent: #a84b3c;
+  --ink: #0c3336;
+  --ink-foreground: #eef0e9;
+  --ink-muted: #b8c9c5;
+  --ink-rule: #365a5b;
+}
+
+.dark {
+  --background: #111a19;
+  --foreground: #ece9df;
+  --card: #17211f;
+  --card-foreground: #ece9df;
+  --primary: #9cc0b9;
+  --primary-foreground: #10211f;
+  --secondary: #23302d;
+  --secondary-foreground: #e1e6df;
+  --muted: #1c2825;
+  --muted-foreground: #a9b5b0;
+  --border: #384440;
+  --ring: #8cb4ac;
+  --accent: #cf7563;
+  --ink: #081311;
+  --ink-foreground: #f0eee5;
+  --ink-muted: #a9bbb6;
+  --ink-rule: #2d4642;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+  --color-accent: var(--accent);
+  --color-ink: var(--ink);
+  --color-ink-foreground: var(--ink-foreground);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-rule: var(--ink-rule);
+  --font-sans: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
+  --font-serif: "Songti SC", "STSong", "Noto Serif CJK SC", serif;
+}
+
+* {
+  border-color: var(--border);
+  scrollbar-color: var(--primary) var(--muted);
+}
+
+html {
+  scroll-behavior: smooth;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+button,
+input,
+select,
+textarea {
+  caret-color: var(--accent);
+  font: inherit;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: #b8cfc8;
+  color: #10211f;
+}
+
+.page-shell {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 80rem;
+  padding: 4.5rem 1.25rem;
+}
+
+.section-title {
+  max-width: 20ch;
+  font-family: var(--font-serif);
+  font-size: clamp(2rem, 4vw, 3.75rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+  text-wrap: balance;
+}
+
+.brand-sigil {
+  display: grid;
+  width: 1.9rem;
+  height: 1.9rem;
+  place-items: center;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-family: var(--font-serif);
+  font-size: 0.875rem;
+  line-height: 1;
+}
+
+.nav-link {
+  position: relative;
+  padding-block: 1.65rem;
+}
+
+.nav-link::after {
+  position: absolute;
+  right: 0;
+  bottom: 1.15rem;
+  left: 0;
+  height: 1px;
+  background: var(--accent);
+  content: "";
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 180ms ease-out;
+}
+
+.nav-link:hover::after,
+.nav-link:focus-visible::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+.research-label {
+  color: var(--accent);
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.research-only {
+  display: none;
+}
+
+html[data-view-mode="research"] .research-only {
+  display: block;
+}
+
+.graph-node-focus-ring {
+  stroke: var(--ring);
+  stroke-width: 3;
+  opacity: 0;
+  pointer-events: none;
+  vector-effect: non-scaling-stroke;
+}
+
+.graph-node:focus-visible .graph-node-focus-ring {
+  opacity: 1;
+}
+
+[role="group"] button svg,
+header button svg {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 1024px) {
+  .page-shell {
+    padding: 7rem 2rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
