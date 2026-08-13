@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { ResearchModeToggle } from "@/components/research/research-mode-toggle";
+import { GlobalSearchDialog } from "@/components/search/global-search-dialog";
 import { ThemeToggle } from "./theme-toggle";
 
 const navigation = [
@@ -12,8 +13,8 @@ const navigation = [
   ["/timeline", "演化"],
   ["/knowledge", "知识库"],
   ["/classics", "典籍"],
-  ["/systems/deduction", "推演"],
   ["/graph", "图谱"],
+  ["/tools", "推演"],
 ] as const;
 
 export function SiteHeader() {
@@ -42,11 +43,13 @@ export function SiteHeader() {
         </nav>
 
         <div className="ml-7 hidden items-center gap-2 xl:flex">
+          <GlobalSearchDialog />
           <ResearchModeToggle compact />
           <ThemeToggle />
         </div>
 
         <div className="ml-auto flex items-center gap-1 xl:hidden">
+          <GlobalSearchDialog onNavigate={() => setOpen(false)} />
           <ThemeToggle />
           <button
             type="button"

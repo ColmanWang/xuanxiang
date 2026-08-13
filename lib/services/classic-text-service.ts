@@ -1,0 +1,37 @@
+import { classicRepository } from "@/lib/repositories/classic-repository";
+import type { ClassicArchiveItem, PassageContext, PassageEntityView, ReaderData, SectionTreeNode, WitnessView } from "@/lib/classics/types";
+import type { ReaderParams } from "@/lib/classics/reader-params";
+
+const witnessView=(item:Awaited<ReturnType<typeof classicRepository.getClassicWitnesses>>[number]):WitnessView=>({id:item.id,title:item.title,shortTitle:item.shortTitle??undefined,editionType:item.editionType,description:item.description??undefined,isPrimary:item.isPrimary,editorialStatus:item.editorialStatus,sourceTitle:item.source?.title});
+const hrefFor=(type:string,id:string)=>type==="CONCEPT"?`/knowledge/${id}`:type==="CLASSIC"?`/classics/${id}`:type==="PERSON"?`/people/${id}`:type==="SCHOOL"?`/schools/${id}`:`/techniques/${id}`;
+
+export function buildSectionTree(rows:Awaited<ReturnType<typeof classicRepository.getClassicStructure>>):SectionTreeNode[]{
+  const nodes=new Map<string,SectionTreeNode>(rows.map(row=>[row.id,{id:row.id,slug:row.slug,title:row.title,ordinal:row.ordinal,sectionType:row.sectionType,depth:row.depth,parentId:row.parentId??undefined,children:[],passageCount:row._count.passages}] as const));
+  const roots:SectionTreeNode[]=[]; for(const node of nodes.values()){if(node.parentId&&nodes.has(node.parentId))nodes.get(node.parentId)!.children.push(node);else roots.push(node)} return roots;
+}
+
+async function resolveEntity(link:{id:string;entityType:string;entityId:string;linkType:PassageEntityView["linkType"];note:string|null;evidenceStatus:PassageEntityView["evidenceStatus"]}):Promise<PassageEntityView>{
+  const { prisma }=await import("@/lib/prisma");
+  const item=link.entityType==="CONCEPT"?await prisma.concept.findUnique({where:{id:link.entityId},select:{name:true}}):link.entityType==="CLASSIC"?await prisma.classic.findUnique({where:{id:link.entityId},select:{title:true}}):link.entityType==="PERSON"?await prisma.person.findUnique({where:{id:link.entityId},select:{name:true}}):link.entityType==="SCHOOL"?await prisma.school.findUnique({where:{id:link.entityId},select:{name:true}}):await prisma.technique.findUnique({where:{id:link.entityId},select:{name:true}});
+  const title=item?("title" in item?item.title:item.name):"条目正在整理"; return {id:link.id,entityType:link.entityType as PassageEntityView["entityType"],entityId:link.entityId,title,href:hrefFor(link.entityType,link.entityId),linkType:link.linkType,note:link.note??undefined,evidenceStatus:link.evidenceStatus};
+}
+
+export async function getPassageContext(id:string):Promise<PassageContext|null>{
+  const item=await classicRepository.getPassage(id); if(!item)return null;
+  const {getRulesForPassage}=await import("@/lib/bazi/provenance");
+  const [order,entityLinks,rules]=await Promise.all([classicRepository.getWitnessPassageOrder(item.section.witnessId),Promise.all(item.entityLinks.map(resolveEntity)),getRulesForPassage(id)]); const index=order.findIndex(row=>row.id===id);
+  return {passage:{id:item.id,ordinal:item.ordinal,text:item.text,normalizedText:item.normalizedText??undefined,contentType:item.contentType,editorialStatus:item.editorialStatus,linkCount:item.entityLinks.length},previous:index>0?order[index-1]:undefined,next:index>=0&&index<order.length-1?order[index+1]:undefined,section:{id:item.section.id,slug:item.section.slug,title:item.section.title},witness:{id:item.section.witness.id,title:item.section.witness.title,shortTitle:item.section.witness.shortTitle??undefined,editionType:item.section.witness.editionType,description:item.section.witness.description??undefined,isPrimary:item.section.witness.isPrimary,editorialStatus:item.section.witness.editorialStatus,sourceTitle:item.section.witness.source?.title},classic:{id:item.section.witness.classic.id,slug:item.section.witness.classic.slug,title:item.section.witness.classic.title},entityLinks,citations:item.citations.map(c=>({id:c.id,sourceTitle:c.source.title,locator:c.locator??undefined,note:c.note??undefined,evidenceStatus:c.evidenceStatus,subjectType:c.subjectType,subjectId:c.subjectId})),rules};
+}
+
+export async function getReaderData(slug:string,params:ReaderParams):Promise<ReaderData|null>{
+  const classic=await classicRepository.getClassicBySlug(slug); if(!classic)return null; const witnessRows=await classicRepository.getClassicWitnesses(classic.id); if(!witnessRows.length)return null;
+  let witness=witnessRows.find(item=>item.id===params.edition)??witnessRows.find(item=>item.isPrimary)??witnessRows[0]; let selectedPassage=params.passage?await getPassageContext(params.passage):null; if(selectedPassage?.classic.id!==classic.id)selectedPassage=null; if(selectedPassage){witness=witnessRows.find(item=>item.id===selectedPassage.witness.id)??witness}
+  const rows=await classicRepository.getClassicStructure(witness.id); const active=rows.find(item=>item.id===selectedPassage?.section.id)||rows.find(item=>item.slug===params.section)||rows[0]; if(!active)return null; const passages=await classicRepository.getSectionPassages(active.id);
+  return {classic:{id:classic.id,slug:classic.slug,title:classic.title},witnesses:witnessRows.map(witnessView),witness:witnessView(witness),sections:buildSectionTree(rows),activeSection:{id:active.id,slug:active.slug,title:active.title},passages:passages.map(item=>({...item,normalizedText:item.normalizedText??undefined,linkCount:item._count.entityLinks})),selectedPassage:selectedPassage??undefined};
+}
+
+export async function getClassicArchives():Promise<ClassicArchiveItem[]>{const books=await classicRepository.getArchiveList();const relations=await classicRepository.getClassicRelationCount(books.map(b=>b.id));return books.map(book=>{const relationCount=relations.filter(r=>(r.sourceType==="CLASSIC"&&r.sourceId===book.id)||(r.targetType==="CLASSIC"&&r.targetId===book.id)).length;const sections=book.witnesses.flatMap(w=>w.sections);return{id:book.id,slug:book.slug,title:book.title,period:book.period??undefined,category:book.categories[0]??"未分类",summary:book.summary,editorialStatus:book.editorialStatus,witnessCount:book.witnesses.length,sectionCount:sections.length,passageCount:sections.reduce((sum,s)=>sum+s._count.passages,0),relationCount}})}
+
+export async function searchClassicPassages(query:string,classicId?:string,witnessId?:string){if(!query.trim())return[];return (await classicRepository.searchClassicText(query.trim(),classicId,witnessId)).map(item=>({id:item.id,text:item.text,sectionTitle:item.section.title,sectionSlug:item.section.slug,witnessId:item.section.witness.id,classicId:item.section.witness.classic.id,classicSlug:item.section.witness.classic.slug,classicTitle:item.section.witness.classic.title,href:`/classics/${item.section.witness.classic.slug}/read?passage=${item.id}`}))}
+
+export async function getClassicTextMeta(slug:string){const classic=await classicRepository.getClassicBySlug(slug);if(!classic)return null;const witnesses=await classicRepository.getClassicWitnesses(classic.id);const structures=await Promise.all(witnesses.map(w=>classicRepository.getClassicStructure(w.id)));return{witnesses:witnesses.map(witnessView),sectionCount:structures.reduce((sum,rows)=>sum+rows.length,0),passageCount:structures.flat().reduce((sum,row)=>sum+row._count.passages,0)}}

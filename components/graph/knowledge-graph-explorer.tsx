@@ -1,103 +1,125 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import type { GraphEdge, GraphEntityType, GraphNode } from "@/types/graph";
-import { EntityInspector } from "./entity-inspector";
-import { GraphCanvas } from "./graph-canvas";
-import { entityTypeLabels, entityTypes } from "./graph-config";
-import { GraphLegend } from "./graph-legend";
-import { RelationList } from "./relation-list";
+import { ReactFlowProvider, useNodesState, useReactFlow } from "@xyflow/react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { GraphCanvas } from "@/components/graph/graph-canvas";
+import type { KnowledgeFlowEdge } from "@/components/graph/graph-edge";
+import { GraphInspector } from "@/components/graph/graph-inspector";
+import { GraphLegend } from "@/components/graph/graph-legend";
+import { GraphListView } from "@/components/graph/graph-list-view";
+import type { KnowledgeFlowNode } from "@/components/graph/graph-node";
+import { GraphPresetList } from "@/components/graph/graph-preset-list";
+import { GraphToolbar } from "@/components/graph/graph-toolbar";
+import { DEFAULT_GRAPH_FILTERS, filterGraph, matchesGraphQuery } from "@/lib/graph/filters";
+import { getRelationsForNode } from "@/lib/graph/relations";
+import type { GraphEdge, GraphFilterState, GraphNode, GraphPreset, GraphViewMode } from "@/lib/graph/types";
 
-type KnowledgeGraphExplorerProps = {
+interface KnowledgeGraphExplorerProps {
   nodes: GraphNode[];
   edges: GraphEdge[];
-};
+  presets: GraphPreset[];
+  initialNodeId?: string;
+  initialPresetId?: string;
+}
 
-export function KnowledgeGraphExplorer({ nodes, edges }: KnowledgeGraphExplorerProps) {
-  const [activeTypes, setActiveTypes] = useState<GraphEntityType[]>(entityTypes);
-  const [selectedNodeId, setSelectedNodeId] = useState(nodes[0]?.id ?? "");
-
+function GraphWorkspace({ nodes, edges, presets, initialNodeId, initialPresetId }: KnowledgeGraphExplorerProps) {
+  const { fitView, setCenter } = useReactFlow<KnowledgeFlowNode, KnowledgeFlowEdge>();
+  const [filters, setFilters] = useState<GraphFilterState>(() => ({ ...DEFAULT_GRAPH_FILTERS, presetId: initialPresetId }));
+  const [viewMode, setViewMode] = useState<GraphViewMode>("graph");
+  const [selectedNodeId, setSelectedNodeId] = useState(initialNodeId && nodes.some((node) => node.id === initialNodeId) ? initialNodeId : "");
+  const [mobileInspectorOpen, setMobileInspectorOpen] = useState(Boolean(initialNodeId));
+  const pendingFocusNodeId = useRef(initialNodeId);
   const nodeMap = useMemo(() => new Map(nodes.map((node) => [node.id, node])), [nodes]);
-  const visibleNodes = useMemo(
-    () => nodes.filter((node) => activeTypes.includes(node.type)),
-    [activeTypes, nodes],
-  );
-  const visibleNodeIds = useMemo(
-    () => new Set(visibleNodes.map((node) => node.id)),
-    [visibleNodes],
-  );
-  const visibleEdges = useMemo(
-    () => edges.filter((edge) => visibleNodeIds.has(edge.sourceId) && visibleNodeIds.has(edge.targetId)),
-    [edges, visibleNodeIds],
-  );
-  const selectedNode = nodeMap.get(selectedNodeId) ?? visibleNodes[0];
-  const selectedRelations = useMemo(
-    () => selectedNode ? edges.filter((edge) => edge.sourceId === selectedNode.id || edge.targetId === selectedNode.id) : [],
-    [edges, selectedNode],
-  );
+  const filtered = useMemo(() => filterGraph(nodes, edges, filters, presets), [nodes, edges, filters, presets]);
+  const visibleNodeIds = useMemo(() => new Set(filtered.nodes.map((node) => node.id)), [filtered.nodes]);
+  const selectedNode = selectedNodeId && visibleNodeIds.has(selectedNodeId) ? nodeMap.get(selectedNodeId) : undefined;
+  const selectedRelations = useMemo(() => selectedNode ? getRelationsForNode(selectedNode.id, filtered.edges) : [], [selectedNode, filtered.edges]);
   const relatedNodeIds = useMemo(() => {
-    const ids = new Set<string>();
-    if (!selectedNode) return ids;
-    for (const edge of visibleEdges) {
-      if (edge.sourceId === selectedNode.id) ids.add(edge.targetId);
-      if (edge.targetId === selectedNode.id) ids.add(edge.sourceId);
-    }
-    return ids;
-  }, [selectedNode, visibleEdges]);
+    const result = new Set<string>();
+    for (const relation of selectedRelations) result.add(relation.source === selectedNodeId ? relation.target : relation.source);
+    return result;
+  }, [selectedNodeId, selectedRelations]);
+  const searchResults = useMemo(() => filters.query ? nodes.filter((node) => matchesGraphQuery(node, filters.query)) : [], [filters.query, nodes]);
 
-  function setTypeVisible(type: GraphEntityType) {
-    const nextTypes = activeTypes.includes(type)
-      ? activeTypes.filter((activeType) => activeType !== type)
-      : [...activeTypes, type];
-    const selectedType = selectedNode?.type;
+  const flowNodes = useMemo<KnowledgeFlowNode[]>(() => filtered.nodes.map((node) => ({
+    id: node.id,
+    type: "knowledge",
+    position: node.position,
+    data: {
+      graphNode: node,
+      selected: node.id === selectedNodeId,
+      related: relatedNodeIds.has(node.id),
+      subdued: Boolean(selectedNodeId) && node.id !== selectedNodeId && !relatedNodeIds.has(node.id),
+    },
+  })), [filtered.nodes, relatedNodeIds, selectedNodeId]);
+  const flowEdges = useMemo<KnowledgeFlowEdge[]>(() => filtered.edges.map((edge) => {
+    const highlighted = edge.source === selectedNodeId || edge.target === selectedNodeId;
+    return {
+      id: edge.id,
+      source: edge.source,
+      target: edge.target,
+      type: "knowledge",
+      data: { graphEdge: edge, highlighted, subdued: Boolean(selectedNodeId) && !highlighted },
+    };
+  }), [filtered.edges, selectedNodeId]);
+  const [renderedNodes, setRenderedNodes, onNodesChange] = useNodesState<KnowledgeFlowNode>(flowNodes);
 
-    setActiveTypes(nextTypes);
-    if (!selectedType || !nextTypes.includes(selectedType)) {
-      setSelectedNodeId(nodes.find((node) => nextTypes.includes(node.type))?.id ?? "");
-    }
+  useEffect(() => {
+    setRenderedNodes(flowNodes);
+    const frame = requestAnimationFrame(() => {
+      if (pendingFocusNodeId.current) {
+        const node = nodeMap.get(pendingFocusNodeId.current);
+        if (node) requestAnimationFrame(() => setCenter(node.position.x + 72, node.position.y + 28, { zoom: 1.15, duration: 420 }));
+        pendingFocusNodeId.current = undefined;
+      } else {
+        void fitView({ padding: 0.16, maxZoom: 1.15, duration: 360 });
+      }
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [fitView, flowNodes, nodeMap, setCenter, setRenderedNodes]);
+
+  const selectNode = useCallback((nodeId: string, openMobile = true) => {
+    setSelectedNodeId(nodeId);
+    pendingFocusNodeId.current = nodeId;
+    if (openMobile) setMobileInspectorOpen(true);
+    window.history.replaceState(null, "", `/graph?node=${nodeId}`);
+  }, []);
+
+  function selectSearchResult(nodeId: string) {
+    setFilters(DEFAULT_GRAPH_FILTERS);
+    selectNode(nodeId);
   }
 
-  function showAllTypes() {
-    setActiveTypes(entityTypes);
-    if (!selectedNodeId) setSelectedNodeId(nodes[0]?.id ?? "");
+  function selectPreset(preset: GraphPreset) {
+    setFilters({ ...DEFAULT_GRAPH_FILTERS, presetId: preset.id });
+    selectNode(preset.focusNodeId, false);
   }
 
   return (
-    <section
-      className="mt-10 [--graph-book:var(--accent)] [--graph-concept:var(--primary)] [--graph-node-stroke:color-mix(in_srgb,var(--foreground)_72%,transparent)] [--graph-node-text:var(--primary-foreground)] [--graph-person:var(--card)] [--graph-school:var(--secondary)] [--graph-technique-detail:var(--ink-muted)] [--graph-technique:var(--ink)]"
-      aria-labelledby="graph-explorer-title"
-    >
-      <div className="flex flex-col gap-6 border-b pb-7 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <h2 id="graph-explorer-title" className="font-serif text-2xl sm:text-3xl">实体关系场</h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">切换实体类型以收窄网络；图中节点可点击，也可使用 Tab 键定位后按回车选择。</p>
+    <section className="mt-8" aria-labelledby="graph-workspace-title">
+      <h2 id="graph-workspace-title" className="sr-only">玄象图谱探索工作区</h2>
+      <GraphPresetList presets={presets} activePresetId={filters.presetId} onSelect={selectPreset} />
+      <div className="pt-7">
+        <GraphToolbar filters={filters} searchResults={searchResults} viewMode={viewMode} onFiltersChange={setFilters} onSelectSearchResult={selectSearchResult} onViewModeChange={setViewMode} />
+        <div className="flex items-center justify-between gap-4 px-1 py-3 text-xs text-muted-foreground" aria-live="polite">
+          <span>显示 <b className="font-medium text-foreground">{filtered.nodes.length}</b> 个节点 · <b className="font-medium text-foreground">{filtered.edges.length}</b> 条关系</span>
+          {viewMode === "graph" ? <span className="hidden sm:inline">拖动节点整理局部视图；滚轮平移，控制器缩放</span> : <span>图谱的无障碍列表视图</span>}
         </div>
-        <div>
-          <p className="mb-3 text-xs tracking-[0.16em] text-muted-foreground">实体筛选</p>
-          <div className="flex flex-wrap gap-2" role="group" aria-label="按实体类型筛选">
-            <button type="button" aria-pressed={activeTypes.length === entityTypes.length} onClick={showAllTypes} className={`min-h-10 border px-4 text-sm transition-colors ${activeTypes.length === entityTypes.length ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:bg-muted"}`}>全部</button>
-            {entityTypes.map((type) => {
-              const active = activeTypes.includes(type);
-              const count = nodes.filter((node) => node.type === type).length;
-              return <button key={type} type="button" aria-pressed={active} onClick={() => setTypeVisible(type)} className={`min-h-10 border px-4 text-sm transition-colors ${active ? "border-primary bg-secondary text-secondary-foreground" : "border-border bg-background text-muted-foreground hover:text-foreground"}`}>{entityTypeLabels[type]} <span className="tabular opacity-65">{count}</span></button>;
-            })}
+        {viewMode === "graph" ? (
+          <div className="grid gap-5 lg:grid-cols-[minmax(0,3fr)_minmax(18rem,1fr)]">
+            <div className="min-w-0"><GraphCanvas nodes={renderedNodes} edges={flowEdges} onNodesChange={onNodesChange} onSelectNode={selectNode} empty={filtered.nodes.length === 0} /><GraphLegend /></div>
+            <GraphInspector node={selectedNode} edges={edges} nodeMap={nodeMap} onSelectNode={selectNode} />
           </div>
-        </div>
+        ) : (
+          <GraphListView nodes={filtered.nodes} onSelectNode={selectNode} />
+        )}
       </div>
-
-      <div className="grid border-b lg:grid-cols-[minmax(0,1fr)_21rem]">
-        <div className="min-w-0 py-6 lg:border-r lg:pr-6">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
-            <p aria-live="polite">显示 <span className="tabular text-foreground">{visibleNodes.length}</span> 个实体、<span className="tabular text-foreground">{visibleEdges.length}</span> 条关系</p>
-            <p className="sm:hidden">向左滑动可查看完整图谱</p>
-          </div>
-          <GraphCanvas nodes={visibleNodes} edges={visibleEdges} nodeMap={nodeMap} selectedNode={selectedNode} relatedNodeIds={relatedNodeIds} onSelectNode={setSelectedNodeId} />
-          <GraphLegend />
-        </div>
-        <EntityInspector selectedNode={selectedNode} relations={selectedRelations} nodeMap={nodeMap} visibleNodeIds={visibleNodeIds} onSelectNode={setSelectedNodeId} />
-      </div>
-
-      <RelationList edges={visibleEdges} nodeMap={nodeMap} onSelectNode={setSelectedNodeId} />
+      {mobileInspectorOpen && selectedNode ? <GraphInspector mobile node={selectedNode} edges={edges} nodeMap={nodeMap} onSelectNode={selectNode} onClose={() => setMobileInspectorOpen(false)} /> : null}
+      {mobileInspectorOpen && selectedNode ? <button type="button" className="fixed inset-0 z-30 bg-foreground/25 lg:hidden" onClick={() => setMobileInspectorOpen(false)} aria-label="关闭节点详情遮罩" /> : null}
     </section>
   );
+}
+
+export function KnowledgeGraphExplorer(props: KnowledgeGraphExplorerProps) {
+  return <ReactFlowProvider><GraphWorkspace {...props} /></ReactFlowProvider>;
 }

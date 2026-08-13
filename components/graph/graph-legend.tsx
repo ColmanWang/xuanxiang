@@ -1,18 +1,12 @@
-import { entityTypeLabels, entityTypes } from "./graph-config";
+import { entityTypeLabels, entityTypes } from "@/components/graph/graph-config";
 
 export function GraphLegend() {
   return (
-    <div className="mt-5 flex flex-wrap gap-x-6 gap-y-3 text-xs text-muted-foreground">
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-x border-b bg-card/45 px-4 py-3 text-[10px] text-muted-foreground" aria-label="图谱图例">
       {entityTypes.map((type) => (
-        <span key={type} className="inline-flex items-center gap-2">
-          <span className="size-3 border border-foreground/60" style={{ background: type === "PERSON" ? "var(--card)" : `var(--graph-${type.toLowerCase()})`, borderRadius: type === "CONCEPT" ? "999px" : "0", transform: type === "PERSON" ? "rotate(45deg)" : undefined }} aria-hidden="true" />
-          {entityTypeLabels[type]}
-        </span>
+        <span key={type} className="inline-flex items-center gap-2"><i className={`graph-legend-mark graph-entity-${type}`} />{entityTypeLabels[type]}</span>
       ))}
-      <span className="inline-flex items-center gap-2">
-        <span className="relative block h-px w-7 bg-muted-foreground after:absolute after:-right-px after:-top-[3px] after:size-0 after:border-y-4 after:border-l-[6px] after:border-y-transparent after:border-l-muted-foreground" />
-        关系方向
-      </span>
+      <span className="ml-auto hidden items-center gap-2 sm:inline-flex"><i className="w-7 border-t border-dashed" />虚线表示解释、来源或并行关系</span>
     </div>
   );
 }

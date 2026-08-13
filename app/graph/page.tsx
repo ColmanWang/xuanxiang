@@ -1,29 +1,39 @@
 import type { Metadata } from "next";
 import { KnowledgeGraphExplorer } from "@/components/graph/knowledge-graph-explorer";
-import { graphEdges, graphNodes } from "@/data/graph";
+import { graphPresets } from "@/data/graph";
+import { getGraph } from "@/lib/services/graph-service";
 
 export const metadata: Metadata = {
-  title: "知识图谱",
-  description:
-    "沿着经典、概念、人物、学派与术数之间的关系，探索中国传统思想与术数知识网络。",
+  title: "玄象图谱",
+  description: "在经典、人物、思想、术数与时代之间，寻找中国传统思想的关联与流变。",
 };
 
-export default function GraphPage() {
+type GraphPageProps = {
+  searchParams: Promise<{ node?: string | string[]; nodes?: string | string[] }>;
+};
+
+export default async function GraphPage({ searchParams }: GraphPageProps) {
+  const { node, nodes: nodesQuery } = await searchParams;
+  const initialNodeId = typeof node === "string" ? node : undefined;
+  const initialNodeIds = typeof nodesQuery === "string" ? nodesQuery.split(",").map((item) => item.trim()).filter(Boolean) : [];
+  const { nodes, edges } = await getGraph();
+  const passagePreset = initialNodeIds.length ? { id:"passage-context",title:"原典文句关联",description:"从当前原典文句进入相关知识实体。",nodeIds:initialNodeIds,focusNodeId:initialNodeIds[0] } : undefined;
+  const presets = passagePreset ? [passagePreset, ...graphPresets] : graphPresets;
+
   return (
-    <div className="page-shell max-w-[90rem]">
-      <header className="grid gap-8 border-b pb-10 lg:grid-cols-[minmax(0,1fr)_24rem] lg:items-end">
+    <div className="page-shell max-w-[94rem]">
+      <header className="grid gap-8 border-b pb-10 lg:grid-cols-[minmax(0,1fr)_25rem] lg:items-end">
         <div>
-          <h1 className="section-title text-4xl sm:text-5xl">知识之间，关系成网</h1>
+          <h1 className="section-title text-4xl sm:text-5xl">玄象图谱</h1>
           <p className="mt-6 max-w-3xl text-base leading-8 text-muted-foreground sm:text-lg">
-            从经典、概念、人物、学派与术数五类实体出发，查看它们如何彼此阐释、汇合、影响与派生。
+            在经典、人物、思想、术数与时代之间，寻找中国传统思想的关联与流变。
           </p>
         </div>
         <p className="max-w-sm border-t pt-5 text-sm leading-7 text-muted-foreground lg:justify-self-end">
-          箭头从关系的发起实体指向接受实体。选择任一节点，可在右侧查看其定义与直接关系。
+          这里呈现的不是随机网络，而是可追溯的关系与脉络。选择节点后，可继续查看溯源、并行与流变。
         </p>
       </header>
-
-      <KnowledgeGraphExplorer nodes={graphNodes} edges={graphEdges} />
+      <KnowledgeGraphExplorer nodes={nodes} edges={edges} presets={presets} initialNodeId={initialNodeId ?? initialNodeIds[0]} initialPresetId={passagePreset?.id} />
     </div>
   );
 }

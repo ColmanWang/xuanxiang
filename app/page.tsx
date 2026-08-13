@@ -15,6 +15,7 @@ import { concepts } from "@/data/concepts";
 import { knowledgeSystems } from "@/data/systems";
 import { thoughtEvolution } from "@/data/timeline";
 import { deductionSystems } from "@/data/tools";
+import { getPreviewGraph } from "@/lib/services/graph-service";
 
 const featuredSystems = knowledgeSystems.filter((system) =>
   ["yixue", "yinyang-wuxing", "daoist-thought", "mingli", "fengshui", "physiognomy"].includes(system.slug),
@@ -29,7 +30,8 @@ function SectionLead({ title, description }: { title: string; description: strin
   );
 }
 
-export default function Home() {
+export default async function Home() {
+  const previewGraph = await getPreviewGraph();
   return (
     <>
       <section className="relative overflow-hidden border-b">
@@ -137,20 +139,20 @@ export default function Home() {
       <section className="page-shell">
         <SectionLead
           title="象之网络"
-          description="同一概念会在不同时代、典籍与方法中获得新的解释。图谱让这些交叉关系成为可浏览的研究入口。"
+          description="思想不是孤立的条目，而是在时代中彼此连接、解释与演化。"
         />
         <div className="mt-14 grid gap-8 xl:grid-cols-[1fr_18rem]">
-          <KnowledgeNetworkPreview />
+          <KnowledgeNetworkPreview nodes={previewGraph.nodes} edges={previewGraph.edges} />
           <aside className="flex flex-col border-t pt-6 xl:border-l xl:border-t-0 xl:pl-7 xl:pt-0">
             <GitBranch className="size-8 text-accent" strokeWidth={1.4} aria-hidden="true" />
             <h3 className="mt-7 font-serif text-3xl">探索概念之间的关联</h3>
             <p className="mt-5 text-sm leading-7 text-muted-foreground">
-              从周易到阴阳五行，从老庄到魏晋玄学；沿着“影响、来源、属于、相关”进入知识对象。
+              以《周易》为中心，沿着阴阳、八卦、象数、人物与术数的直接关系，进入可追溯的思想脉络。
             </p>
             <dl className="mt-8 space-y-4 border-y py-5 text-sm">
-              <div className="flex justify-between"><dt className="text-muted-foreground">节点类型</dt><dd>5 类</dd></div>
-              <div className="flex justify-between"><dt className="text-muted-foreground">关系语义</dt><dd>5 种</dd></div>
-              <div className="flex justify-between"><dt className="text-muted-foreground">当前版本</dt><dd>静态 Demo</dd></div>
+              <div className="flex justify-between"><dt className="text-muted-foreground">节点类型</dt><dd>6 类</dd></div>
+              <div className="flex justify-between"><dt className="text-muted-foreground">关系语义</dt><dd>9 种</dd></div>
+              <div className="flex justify-between"><dt className="text-muted-foreground">当前版本</dt><dd>图谱 1.0</dd></div>
             </dl>
             <ButtonLink href="/graph" className="mt-auto translate-y-0 xl:mt-8">
               进入玄象图谱 <ArrowRight aria-hidden="true" />
@@ -219,7 +221,7 @@ export default function Home() {
               const available = system.status === "available";
               return available ? (
                 <Link
-                  href={`/systems/deduction/${system.slug}`}
+                  href={`/tools/${system.slug}`}
                   key={system.slug}
                   className="group flex min-h-64 flex-col bg-background p-6 hover:bg-card"
                 >

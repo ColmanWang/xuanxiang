@@ -1,33 +1,40 @@
-import type { GraphEntityType, GraphRelationType } from "@/types/graph";
+import type { GraphEntityType, RelationType } from "@/lib/graph/types";
 
 export const entityTypes: GraphEntityType[] = [
-  "CONCEPT",
-  "BOOK",
-  "PERSON",
-  "SCHOOL",
-  "TECHNIQUE",
+  "concept",
+  "classic",
+  "person",
+  "school",
+  "technique",
+  "dynasty",
 ];
 
 export const entityTypeLabels: Record<GraphEntityType, string> = {
-  CONCEPT: "概念",
-  PERSON: "人物",
-  BOOK: "经典",
-  SCHOOL: "学派",
-  TECHNIQUE: "术数",
+  concept: "概念",
+  classic: "经典",
+  person: "人物",
+  school: "学派",
+  technique: "术数",
+  dynasty: "时代",
 };
 
-export const relationTypeLabels: Record<GraphRelationType, string> = {
-  INFLUENCED: "影响",
-  DERIVED_FROM: "源自",
-  BELONGS_TO: "归属",
-  RELATED_TO: "关联",
-  WRITTEN_BY: "作者",
+export const entityTypeMarks: Record<GraphEntityType, string> = {
+  concept: "象",
+  classic: "典",
+  person: "人",
+  school: "学",
+  technique: "术",
+  dynasty: "时",
 };
 
-export const relationDash: Record<GraphRelationType, string | undefined> = {
-  INFLUENCED: undefined,
-  DERIVED_FROM: "8 7",
-  BELONGS_TO: "3 6",
-  RELATED_TO: "2 5",
-  WRITTEN_BY: "12 5 2 5",
+export const relationDash: Record<RelationType, string | undefined> = {
+  RELATED_TO: "5 5",
+  BELONGS_TO: undefined,
+  DERIVED_FROM: "10 4",
+  INFLUENCED_BY: undefined,
+  WRITTEN_BY: "2 4",
+  APPEARS_IN: "2 4",
+  DEVELOPED_DURING: "10 4 2 4",
+  USES: undefined,
+  INTERPRETS: "7 3",
 };

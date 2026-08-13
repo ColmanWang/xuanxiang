@@ -1,3 +1,4 @@
+@import "@xyflow/react/dist/style.css";
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
@@ -20,6 +21,12 @@
   --ink-foreground: #eef0e9;
   --ink-muted: #b8c9c5;
   --ink-rule: #365a5b;
+  --graph-concept: #55746c;
+  --graph-classic: #9a624b;
+  --graph-person: #6d6a58;
+  --graph-school: #587083;
+  --graph-technique: #795f70;
+  --graph-dynasty: #8a7855;
 }
 
 .dark {
@@ -40,6 +47,12 @@
   --ink-foreground: #f0eee5;
   --ink-muted: #a9bbb6;
   --ink-rule: #2d4642;
+  --graph-concept: #73988e;
+  --graph-classic: #b98770;
+  --graph-person: #96917a;
+  --graph-school: #7e9aae;
+  --graph-technique: #9a7c91;
+  --graph-dynasty: #ad9870;
 }
 
 @theme inline {
@@ -179,6 +192,99 @@ html[data-view-mode="research"] .research-only {
 
 .graph-node:focus-visible .graph-node-focus-ring {
   opacity: 1;
+}
+
+.react-flow__pane {
+  cursor: grab;
+}
+
+.react-flow__pane:active {
+  cursor: grabbing;
+}
+
+.react-flow__controls {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.react-flow__controls-button {
+  border-bottom-color: var(--border);
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.react-flow__controls-button:hover {
+  background: var(--muted);
+}
+
+.react-flow__controls-button svg {
+  fill: currentColor;
+}
+
+.graph-handle {
+  width: 1px !important;
+  height: 1px !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+.graph-entity-node {
+  border-left-width: 3px;
+}
+
+.graph-entity-node.is-selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 20%, transparent);
+  transform: translateY(-2px);
+}
+
+.graph-entity-node.is-related {
+  border-color: var(--primary);
+}
+
+.graph-entity-mark {
+  display: grid;
+  width: 1.75rem;
+  height: 1.75rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-family: var(--font-serif);
+  font-size: 0.72rem;
+}
+
+.graph-entity-concept { border-left-color: var(--graph-concept); }
+.graph-entity-classic { border-left-color: var(--graph-classic); }
+.graph-entity-person { border-left-color: var(--graph-person); }
+.graph-entity-school { border-left-color: var(--graph-school); }
+.graph-entity-technique { border-left-color: var(--graph-technique); }
+.graph-entity-dynasty { border-left-color: var(--graph-dynasty); }
+
+.graph-entity-classic .graph-entity-mark { border-radius: 0; }
+.graph-entity-person .graph-entity-mark { border-radius: 999px; }
+.graph-entity-school .graph-entity-mark { transform: rotate(45deg); }
+.graph-entity-school .graph-entity-mark > span { transform: rotate(-45deg); }
+.graph-entity-technique .graph-entity-mark { outline: 1px solid var(--border); outline-offset: 2px; }
+.graph-entity-dynasty .graph-entity-mark { border-width: 0 0 1px; }
+
+.graph-legend-mark {
+  width: 1.4rem;
+  height: 0.55rem;
+  border-left-width: 3px;
+  border-left-style: solid;
+  background: var(--card);
+}
+
+.graph-mobile-inspector {
+  animation: graph-sheet-enter 260ms ease-out both;
+}
+
+@keyframes graph-sheet-enter {
+  from { transform: translateY(2rem); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
 [role="group"] button svg,

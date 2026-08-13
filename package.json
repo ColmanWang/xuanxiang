@@ -7,27 +7,47 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint .",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "prisma:validate": "prisma validate"
+    "prisma:validate": "prisma validate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:seed": "prisma db seed",
+    "classics:validate": "tsx scripts/validate-classic-samples.ts",
+    "classics:import": "tsx scripts/import-classic-text.ts",
+    "calendar:terms": "tsx scripts/calendar-terms.ts",
+    "calendar:verify-terms": "tsx scripts/verify-solar-terms.ts",
+    "bazi:calculate": "tsx scripts/bazi-calculate.ts",
+    "bazi:rules": "tsx scripts/bazi-rules.ts",
+    "bazi:verify-foundation": "tsx scripts/verify-bazi-foundation.ts"
   },
   "dependencies": {
+    "@js-temporal/polyfill": "0.5.1",
+    "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
+    "@xyflow/react": "^12.11.2",
     "lucide-react": "^1.29.0",
+    "lunar-typescript": "1.8.6",
     "next": "16.3.0",
     "next-themes": "^0.4.6",
+    "pg": "^8.22.0",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "zod": "4.1.12"
   },
   "devDependencies": {
+    "@playwright/test": "1.55.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pg": "^8.21.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.0",
     "prisma": "^7.9.1",
     "tailwindcss": "^4",
-    "typescript": "^5.9.3"
+    "tsx": "^4.23.11",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.10"
   },
   "packageManager": "pnpm@11.9.0"
 }

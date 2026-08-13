@@ -1,0 +1,15 @@
+import { describe,expect,it } from "vitest";
+import { BAZI_FIXTURES } from "../../fixtures/bazi/regression";
+import { EarthlyBranch,HeavenlyStem,ganzhiAt } from "../calendar/ganzhi";
+import { DeterministicBaziEngine } from "./engine";
+import { growthPhase } from "./growth-phases";
+import { HIDDEN_STEMS } from "./hidden-stems";
+import { nayinFor } from "./nayin";
+import { tenGod } from "./ten-gods";
+const engine=new DeterministicBaziEngine();
+describe("Bazi regression fixtures",()=>{for(const fixture of BAZI_FIXTURES)it(fixture.id,()=>{const chart=engine.calculate(fixture.input);expect({year:chart.pillars.year.display,month:chart.pillars.month.display,day:chart.pillars.day.display,hour:chart.pillars.hour?.display??null}).toEqual(fixture.expected);expect(chart.engineVersion).toBe("1.2.0");expect(chart.trace.length).toBeGreaterThanOrEqual(8);});
+ it("未知时刻不以中午伪造时柱",()=>{const base=BAZI_FIXTURES[3].input;const chart=engine.calculate({...base,time:undefined,timePrecision:"UNKNOWN"});expect(chart.pillars.hour).toBeNull();expect(chart.derived.pillars.hour).toBeNull();});
+ it("立春前后仅年柱月柱切换",()=>{const before=engine.calculate(BAZI_FIXTURES[1].input),after=engine.calculate(BAZI_FIXTURES[2].input);expect(before.pillars.year.display).not.toBe(after.pillars.year.display);expect(before.pillars.month.display).not.toBe(after.pillars.month.display);expect(before.pillars.day.display).toBe(after.pillars.day.display);});
+ it("23 点进入子时但午夜才换日",()=>{const base=BAZI_FIXTURES[8].input;const at23=engine.calculate({...base,time:{hour:23,minute:0}});const midnight=engine.calculate({...base,date:{year:2024,month:3,day:6},time:{hour:0,minute:0}});expect(at23.pillars.hour?.branch).toBe("子");expect(at23.pillars.day.display).toBe("戊辰");expect(midnight.pillars.day.display).toBe("己巳");});
+});
+describe("derived pure functions",()=>{it("十神由阴阳和生克关系确定",()=>{expect(tenGod(HeavenlyStem.JIA,HeavenlyStem.JIA)).toBe("比肩");expect(tenGod(HeavenlyStem.JIA,HeavenlyStem.JI)).toBe("正财");expect(tenGod(HeavenlyStem.JIA,HeavenlyStem.GUI)).toBe("正印");});it("藏干不使用伪权重",()=>{expect(HIDDEN_STEMS[EarthlyBranch.YIN].map(x=>[x.stem,x.role])).toEqual([["甲","主气"],["丙","中气"],["戊","余气"]]);});it("纳音覆盖完整六十甲子",()=>{expect(new Set(Array.from({length:60},(_,i)=>nayinFor({...ganzhiAt(i),display:""})))).toHaveLength(30);expect(nayinFor({...ganzhiAt(0),display:"甲子"})).toBe("海中金");});it("十二长生按日干阴阳顺逆",()=>{expect(growthPhase(HeavenlyStem.JIA,EarthlyBranch.HAI)).toBe("长生");expect(growthPhase(HeavenlyStem.YI,EarthlyBranch.WU)).toBe("长生");});});

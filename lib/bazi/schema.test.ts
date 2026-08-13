@@ -1,0 +1,3 @@
+import { describe,expect,it } from "vitest";
+import { birthInputSchema } from "./schema";
+describe("BirthInput validation",()=>{it("拒绝缺失时刻",()=>{expect(birthInputSchema.safeParse({calendarType:"GREGORIAN",date:{year:2024,month:1,day:1},timezone:"UTC",timePrecision:"MINUTE"}).success).toBe(false);});it("允许未知时刻",()=>{expect(birthInputSchema.safeParse({calendarType:"GREGORIAN",date:{year:2024,month:1,day:1},timezone:"UTC",timePrecision:"UNKNOWN"}).success).toBe(true);});it("真太阳时必须提供经度",()=>{expect(birthInputSchema.safeParse({calendarType:"GREGORIAN",date:{year:2024,month:1,day:1},time:{hour:12,minute:0},timezone:"UTC",timePrecision:"MINUTE",trueSolarTime:true}).success).toBe(false);});});

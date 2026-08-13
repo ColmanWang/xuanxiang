@@ -4,12 +4,12 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowUpRight, Search } from "lucide-react";
 import { ResearchPanel } from "@/components/research/research-panel";
-import { concepts } from "@/data/concepts";
 import { Input } from "@/components/ui/input";
 
-const categories = ["全部", ...new Set(concepts.map((concept) => concept.system))];
+export interface ConceptBrowserItem { name: string; slug: string; aliases: string[]; system: string; era: string; summary: string }
 
-export function KnowledgeBrowser() {
+export function KnowledgeBrowser({ concepts }: { concepts: ConceptBrowserItem[] }) {
+  const categories = ["全部", ...new Set(concepts.map((concept) => concept.system))];
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("全部");
   const normalizedQuery = query.trim().toLocaleLowerCase("zh-CN");
@@ -28,7 +28,7 @@ export function KnowledgeBrowser() {
           .toLocaleLowerCase("zh-CN");
         return inCategory && searchable.includes(normalizedQuery);
       }),
-    [category, normalizedQuery],
+    [category, concepts, normalizedQuery],
   );
 
   return (
@@ -82,19 +82,12 @@ export function KnowledgeBrowser() {
                 <div>
                   <p className="max-w-3xl text-sm leading-7 text-muted-foreground">{concept.summary}</p>
                   <ResearchPanel title="条目摘要">
-                    <dl className="grid gap-4 text-sm sm:grid-cols-3">
+                    <dl className="grid gap-4 text-sm sm:grid-cols-2">
                       <div>
                         <dt className="text-muted-foreground">时代</dt>
                         <dd className="mt-1">{concept.era}</dd>
                       </div>
-                      <div>
-                        <dt className="text-muted-foreground">经典</dt>
-                        <dd className="mt-1">{concept.classics.join("、")}</dd>
-                      </div>
-                      <div>
-                        <dt className="text-muted-foreground">相关概念</dt>
-                        <dd className="mt-1">{concept.related.join("、")}</dd>
-                      </div>
+                      <div><dt className="text-muted-foreground">编辑说明</dt><dd className="mt-1">完整关系与典据请进入条目查看</dd></div>
                     </dl>
                   </ResearchPanel>
                 </div>

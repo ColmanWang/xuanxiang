@@ -1,130 +1,62 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { AlertCircle, BookOpen, CheckCircle2, ChevronDown, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import type { BaziPillar } from "@/lib/bazi/types";
+import type { BaziChart, BirthInput } from "@/lib/bazi/types";
 
-const mockPillars: BaziPillar[] = [
-  { label: "年柱", stem: "甲", branch: "子", tenGod: "偏印", hiddenStems: ["癸"], nayin: "海中金", element: "木 / 水", growthStage: "沐浴" },
-  { label: "月柱", stem: "丙", branch: "寅", tenGod: "比肩", hiddenStems: ["甲", "丙", "戊"], nayin: "炉中火", element: "火 / 木", growthStage: "长生" },
-  { label: "日柱", stem: "丙", branch: "辰", tenGod: "日主", hiddenStems: ["戊", "乙", "癸"], nayin: "沙中土", element: "火 / 土", growthStage: "冠带" },
-  { label: "时柱", stem: "辛", branch: "卯", tenGod: "正财", hiddenStems: ["乙"], nayin: "松柏木", element: "金 / 木", growthStage: "沐浴" },
-];
+type ResultTab="四柱"|"结构"|"大运"|"流年"|"依据";
+const TABS:ResultTab[]=["四柱","结构","大运","流年","依据"];
+const PILLAR_KEYS=["year","month","day","hour"] as const;
+const PILLAR_LABELS={year:"年柱",month:"月柱",day:"日柱",hour:"时柱"};
+const TIMEZONES=["Asia/Shanghai","Asia/Hong_Kong","Asia/Tokyo","UTC","Europe/London","America/New_York","America/Los_Angeles"];
+const STEP_KIND_LABELS={ASTRONOMICAL_FACT:"天文数据",CALENDAR_CONVERSION:"历法转换",BAZI_CONVENTION:"子平规则",RULESET_CHOICE:"规则选择",DERIVED_CALCULATION:"派生计算"};
 
-const resultRows: Array<{ label: string; values: string[] }> = [
-  { label: "天干", values: mockPillars.map((pillar) => pillar.stem) },
-  { label: "地支", values: mockPillars.map((pillar) => pillar.branch) },
-  { label: "十神", values: mockPillars.map((pillar) => pillar.tenGod) },
-  { label: "藏干", values: mockPillars.map((pillar) => pillar.hiddenStems.join(" · ")) },
-  { label: "纳音", values: mockPillars.map((pillar) => pillar.nayin) },
-  { label: "五行", values: mockPillars.map((pillar) => pillar.element) },
-  { label: "十二长生", values: mockPillars.map((pillar) => pillar.growthStage) },
-];
+function parseDate(value:string){const [year,month,day]=value.split("-").map(Number);return{year,month,day};}
+function parseTime(value:string){const [hour,minute]=value.split(":").map(Number);return{hour,minute};}
 
-export function BaziWorkbench() {
-  const [showResult, setShowResult] = useState(true);
-
-  return (
-    <div className="grid gap-10 xl:grid-cols-[22rem_minmax(0,1fr)]">
-      <form
-        className="border-t-2 border-primary bg-card p-6"
-        onSubmit={(event) => {
-          event.preventDefault();
-          setShowResult(true);
-        }}
-      >
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="font-serif text-2xl">输入条件</h2>
-          <span className="tabular text-xs text-muted-foreground">INPUT / 01</span>
-        </div>
-        <div className="mt-7 flex flex-col gap-5">
-          <label className="flex flex-col gap-2 text-sm">
-            出生日期
-            <Input required type="date" defaultValue="1990-02-18" />
-          </label>
-          <label className="flex flex-col gap-2 text-sm">
-            出生时间
-            <Input required type="time" defaultValue="08:30" />
-          </label>
-          <label className="flex flex-col gap-2 text-sm">
-            出生地点
-            <Input required placeholder="城市，如：杭州" defaultValue="杭州" />
-          </label>
-          <label className="flex flex-col gap-2 text-sm">
-            性别
-            <select className="h-11 rounded-sm border bg-background px-3">
-              <option>男</option><option>女</option>
-            </select>
-          </label>
-          <fieldset>
-            <legend className="mb-2 text-sm">历法</legend>
-            <div className="grid grid-cols-2 gap-2">
-              <label className="border bg-background p-3 text-sm"><input type="radio" name="calendar" defaultChecked className="mr-2" />公历</label>
-              <label className="border bg-background p-3 text-sm"><input type="radio" name="calendar" className="mr-2" />农历</label>
-            </div>
-          </fieldset>
-          <Button type="submit" className="w-full">开始推演</Button>
-          <p className="text-xs leading-5 text-muted-foreground">
-            当前结果为界面演示数据，确定性历法引擎尚未启用。
-          </p>
-        </div>
-      </form>
-
-      <section className="min-w-0" aria-live="polite">
-        <div className="flex flex-wrap items-end justify-between gap-4 border-b pb-5">
-          <div>
-            <p className="text-xs text-muted-foreground">结构输出 · MOCK DATA</p>
-            <h2 className="mt-3 font-serif text-3xl">四柱结构</h2>
-          </div>
-          <Badge>演示数据</Badge>
-        </div>
-
-        {showResult ? (
-          <>
-            <div className="mt-6 overflow-x-auto border">
-              <table className="w-full min-w-[43rem] border-collapse text-center text-sm">
-                <caption className="sr-only">四柱演示结果，包含天干、地支、十神、藏干、纳音、五行和十二长生</caption>
-                <thead className="bg-ink text-ink-foreground">
-                  <tr>
-                    <th scope="col" className="p-4 text-left font-normal text-ink-muted">字段</th>
-                    {mockPillars.map((pillar) => <th scope="col" className="p-4 font-serif text-lg font-normal" key={pillar.label}>{pillar.label}</th>)}
-                  </tr>
-                </thead>
-                <tbody>
-                  {resultRows.map((row) => (
-                    <tr className="border-t odd:bg-card/60" key={row.label}>
-                      <th scope="row" className="p-4 text-left font-medium">{row.label}</th>
-                      {row.values.map((value, index) => <td className="p-4" key={`${row.label}-${index}`}>{value}</td>)}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="mt-6 grid gap-px border bg-border sm:grid-cols-2">
-              {[
-                ["大运", "TODO：接入确定性起运与大运计算"],
-                ["流年", "TODO：接入流年序列与关系分析"],
-              ].map(([title, description]) => (
-                <div className="bg-background p-5" key={title}>
-                  <h3 className="font-serif text-lg">{title}</h3>
-                  <p className="mt-3 text-sm text-muted-foreground">{description}</p>
-                </div>
-              ))}
-            </div>
-
-            <aside className="research-only mt-6 border-l-2 border-accent bg-card p-5">
-              <p className="research-label">Research note</p>
-              <h3 className="mt-3 font-serif text-lg">规则边界</h3>
-              <p className="mt-3 text-sm leading-7 text-muted-foreground">
-                后续计算将明确节气换月、真太阳时、早晚子时与历法转换策略，并保留每一步中间结果供复核。
-              </p>
-            </aside>
-          </>
-        ) : null}
-      </section>
-    </div>
-  );
+export function BaziWorkbench(){
+ const[chart,setChart]=useState<BaziChart|null>(null);const[error,setError]=useState<string|null>(null);const[ambiguous,setAmbiguous]=useState(false);const[disambiguation,setDisambiguation]=useState<BirthInput["timeDisambiguation"]>();const[pending,setPending]=useState(false);const[tab,setTab]=useState<ResultTab>("四柱");const[unknownTime,setUnknownTime]=useState(false);const[advanced,setAdvanced]=useState(false);
+ async function submit(formData:FormData){setPending(true);setError(null);setAmbiguous(false);const input:BirthInput={calendarType:String(formData.get("calendarType")) as BirthInput["calendarType"],date:{...parseDate(String(formData.get("date"))),isLeapMonth:formData.get("isLeapMonth")==="on"},time:unknownTime?undefined:parseTime(String(formData.get("time"))),timezone:String(formData.get("timezone")),location:{name:String(formData.get("location")||"")||undefined,longitude:formData.get("longitude")?Number(formData.get("longitude")):undefined},sex:String(formData.get("sex")) as BirthInput["sex"],timePrecision:unknownTime?"UNKNOWN":"MINUTE",timeDisambiguation:disambiguation,trueSolarTime:formData.get("timeRule")==="TRUE_SOLAR",ruleSetId:"STANDARD_ZIPING"};
+  try{const response=await fetch("/api/tools/bazi/calculate",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(input)});const payload=await response.json() as {chart?:BaziChart;error?:{code:string;message:string;issues?:Array<{message:string}>}};if(!response.ok||!payload.chart){if(payload.error?.code==="AMBIGUOUS_LOCAL_TIME")setAmbiguous(true);throw new Error(payload.error?.issues?.[0]?.message??payload.error?.message??"推演失败，请检查输入。");}setChart(payload.chart);setTab("四柱");}
+  catch(e){setChart(null);setError(e instanceof Error?e.message:"推演失败，请稍后重试。");}finally{setPending(false);}
+ }
+ return <div className="grid gap-10 xl:grid-cols-[23rem_minmax(0,1fr)]">
+  <form className="h-fit border-t-2 border-primary bg-card p-6" onSubmit={e=>{e.preventDefault();void submit(new FormData(e.currentTarget));}}>
+   <div className="flex items-center justify-between gap-3"><h2 className="font-serif text-2xl">输入条件</h2><span className="tabular text-xs text-muted-foreground">INPUT / 01</span></div>
+   <div className="mt-7 flex flex-col gap-5">
+    <fieldset><legend className="mb-2 text-sm">历法</legend><div className="grid grid-cols-2 gap-2"><label className="border bg-background p-3 text-sm"><input type="radio" name="calendarType" value="GREGORIAN" defaultChecked className="mr-2"/>公历</label><label className="border bg-muted/50 p-3 text-sm text-muted-foreground"><input type="radio" name="calendarType" value="LUNAR" className="mr-2"/>农历 Beta</label></div></fieldset>
+    <label className="flex flex-col gap-2 text-sm">出生日期<Input name="date" required type="date" defaultValue="1990-02-04" min="1900-01-01" max="2100-12-31"/></label>
+    <label className="flex flex-col gap-2 text-sm">出生时间<Input name="time" required={!unknownTime} disabled={unknownTime} type="time" defaultValue="11:32"/></label>
+    <label className="flex items-center gap-2 text-sm text-muted-foreground"><input type="checkbox" checked={unknownTime} onChange={e=>setUnknownTime(e.target.checked)}/>时刻未知（不计算时柱）</label>
+    <label className="flex flex-col gap-2 text-sm">IANA 时区<select name="timezone" defaultValue="Asia/Shanghai" className="h-11 rounded-sm border bg-background px-3">{TIMEZONES.map(zone=><option key={zone}>{zone}</option>)}</select><span className="text-xs text-muted-foreground">地点与时区分别处理；历史偏移与夏令时由时区数据库解析。</span></label>
+    <label className="flex flex-col gap-2 text-sm">地点（可选）<Input name="location" placeholder="仅作记录，如：杭州"/></label>
+    <label className="flex flex-col gap-2 text-sm">大运顺逆所用分类<select name="sex" defaultValue="UNSPECIFIED" className="h-11 rounded-sm border bg-background px-3"><option value="UNSPECIFIED">暂不指定（不计算大运）</option><option value="MALE">男</option><option value="FEMALE">女</option></select><span className="text-xs text-muted-foreground">仅用于所选传统大运规则中的顺逆计算，不影响四柱。</span></label>
+    <button type="button" className="flex items-center justify-between border-y py-3 text-left text-sm" onClick={()=>setAdvanced(v=>!v)} aria-expanded={advanced}>高级规则<ChevronDown className={`size-4 transition-transform ${advanced?"rotate-180":""}`}/></button>
+    {advanced?<div className="flex flex-col gap-4 border-l-2 border-accent pl-4"><fieldset><legend className="mb-2 text-sm">时间规则</legend><label className="block py-1 text-sm"><input type="radio" name="timeRule" value="STANDARD" defaultChecked className="mr-2"/>标准时</label><label className="block py-1 text-sm text-muted-foreground"><input type="radio" name="timeRule" value="TRUE_SOLAR" className="mr-2"/>真太阳时（实验预留，当前拒绝计算）</label></fieldset><label className="flex flex-col gap-2 text-sm">经度<Input name="longitude" type="number" min="-180" max="180" step="0.0001" placeholder="真太阳时需要"/></label><label className="text-sm"><input type="checkbox" name="isLeapMonth" className="mr-2"/>农历闰月</label></div>:null}
+    <Button type="submit" className="w-full" disabled={pending}>{pending?<Loader2 data-icon="inline-start" className="animate-spin"/>:null}{pending?"正在计算":"开始推演"}</Button>
+    <p className="flex gap-2 text-xs leading-5 text-muted-foreground"><CheckCircle2 className="mt-0.5 size-4 shrink-0"/>当前排盘即时计算，不保存出生信息。</p>
+    {error?<p role="alert" className="flex gap-2 border-l-2 border-destructive bg-background p-3 text-sm text-destructive"><AlertCircle className="mt-0.5 size-4 shrink-0"/>{error}</p>:null}
+    {ambiguous?<fieldset className="border p-3"><legend className="px-1 text-sm">夏令时重复时刻</legend><p className="mb-3 text-xs text-muted-foreground">请选择该时刻第一次或第二次出现，再重新推演。</p><div className="grid grid-cols-2 gap-2"><Button type="button" variant="outline" onClick={()=>setDisambiguation("EARLIER")}>较早一次</Button><Button type="button" variant="outline" onClick={()=>setDisambiguation("LATER")}>较晚一次</Button></div>{disambiguation?<p className="mt-2 text-xs text-primary">已选择：{disambiguation==="EARLIER"?"较早一次":"较晚一次"}</p>:null}</fieldset>:null}
+   </div>
+  </form>
+  <section className="min-w-0" aria-live="polite">
+   {!chart?<div className="grid min-h-[28rem] place-items-center border bg-card/30 p-8 text-center"><div><p className="text-xs tracking-[0.2em] text-muted-foreground">DETERMINISTIC ENGINE</p><h2 className="mt-4 font-serif text-3xl">等待推演</h2><p className="mx-auto mt-4 max-w-md text-sm leading-7 text-muted-foreground">结果由服务端历法与干支引擎生成。输入、规则、节气边界和中间步骤均可复核。</p></div></div>:<>
+    <div className="flex flex-wrap items-end justify-between gap-4 border-b pb-5"><div><p className="text-xs text-muted-foreground">确定性输出 · ENGINE {chart.engineVersion}</p><h2 className="mt-3 font-serif text-3xl">四柱结构</h2></div><Badge>{chart.ruleset.name} · v{chart.ruleSetVersion}</Badge></div>
+    {Math.abs(chart.nearestBoundary.deltaSeconds)<=300?<div className="mt-5 border-l-2 border-accent bg-card p-4 text-sm"><strong>临近节气边界：{chart.nearestBoundary.term}</strong><p className="mt-2 text-muted-foreground">出生时刻与节气相差 {Math.abs(chart.nearestBoundary.deltaSeconds)} 秒；可能影响{chart.nearestBoundary.affectedPillars.map(item=>item==="year"?"年柱":"月柱").join("、")}。不同历算资料若有分钟级差异，边界结果可能变化。</p></div>:null}
+    <div className="mt-6 overflow-x-auto border"><table className="w-full min-w-[42rem] border-collapse text-center text-sm"><caption className="sr-only">程序计算的年柱、月柱、日柱与时柱</caption><thead className="bg-ink text-ink-foreground"><tr><th className="p-4 text-left font-normal text-ink-muted">字段</th>{PILLAR_KEYS.map(k=><th className="p-4 font-serif text-lg font-normal" key={k}>{PILLAR_LABELS[k]}</th>)}</tr></thead><tbody>{["天干","地支","十神"].map(row=><tr className="border-t odd:bg-card/60" key={row}><th className="p-4 text-left font-medium">{row}</th>{PILLAR_KEYS.map(k=>{const p=chart.pillars[k];const d=chart.derived.pillars[k];return <td className="p-4" key={k}>{row==="天干"?p?.stem??"未知":row==="地支"?p?.branch??"未知":d?.tenGod??"无法计算"}</td>})}</tr>)}</tbody></table></div>
+    <div className="mt-7 flex gap-1 overflow-x-auto border-b" role="tablist">{TABS.map(item=><button type="button" role="tab" aria-selected={tab===item} key={item} onClick={()=>setTab(item)} className={`min-w-20 border-b-2 px-4 py-3 text-sm ${tab===item?"border-primary text-foreground":"border-transparent text-muted-foreground"}`}>{item}</button>)}</div>
+    <div className="py-7">{tab==="四柱"?<Basic chart={chart}/>:tab==="结构"?<Structure chart={chart}/>:tab==="大运"?<Luck chart={chart}/>:tab==="流年"?<Annual chart={chart}/>:<Trace chart={chart}/>}</div>
+   </>}
+  </section>
+ </div>;
 }
+
+function Basic({chart}:{chart:BaziChart}){return <div className="grid gap-4 sm:grid-cols-2"><div className="border bg-card p-5"><p className="text-xs text-muted-foreground">标准化时刻</p><p className="mt-3 font-medium">{chart.input.calculationLocalDateTime}</p><p className="mt-2 text-sm text-muted-foreground">{chart.input.timezone} · UTC {chart.input.utcInstant}</p></div><div className="border bg-card p-5"><p className="text-xs text-muted-foreground">规则边界</p><p className="mt-3 font-medium">立春换年 · 节气换月 · 午夜换日</p><div className="mt-3 flex gap-4 text-sm text-primary"><button onClick={()=>document.querySelector<HTMLButtonElement>('[role="tab"]:last-child')?.click()}>查看排盘依据 →</button><Link href="/tools/bazi/rules">规则实验室 →</Link></div></div><div className="border bg-card p-5 sm:col-span-2"><p className="text-xs text-muted-foreground">知识联动</p><div className="mt-3 flex flex-wrap gap-4 text-sm text-primary"><Link href="/knowledge/tiangan">天干</Link><Link href="/knowledge/dizhi">地支</Link><Link href="/knowledge/wuxing">五行</Link><Link href="/knowledge/nayin">纳音</Link><Link href="/techniques/sizhu-mingli">了解四柱命理</Link></div></div></div>}
+function Structure({chart}:{chart:BaziChart}){return <div className="grid gap-4 md:grid-cols-2">{PILLAR_KEYS.map(k=>{const p=chart.pillars[k],d=chart.derived.pillars[k];return <article className="border bg-card p-5" key={k}><div className="flex items-center justify-between"><h3 className="font-serif text-xl">{PILLAR_LABELS[k]} · {p?.display??"未知"}</h3><Badge>{d?.nayin??"—"}</Badge></div>{d?<dl className="mt-5 grid grid-cols-[5rem_1fr] gap-y-3 text-sm"><dt className="text-muted-foreground">十神</dt><dd>{d.tenGod}</dd><dt className="text-muted-foreground">藏干</dt><dd>{d.hiddenStems.map(s=>`${s.stem}（${s.role}·${s.tenGod}）`).join(" · ")}</dd><dt className="text-muted-foreground">五行</dt><dd>{d.elements.stem} / {d.elements.branch}</dd><dt className="text-muted-foreground">长生</dt><dd>{d.growthPhase}</dd></dl>:<p className="mt-4 text-sm text-muted-foreground">依赖时柱的数据无法计算。</p>}</article>})}<article className="border bg-card p-5 md:col-span-2"><h3 className="font-serif text-xl">五行简单计数</h3><p className="mt-2 text-xs text-muted-foreground">仅统计四柱天干地支出现次数，不等同于旺衰判断。</p><div className="mt-5 grid grid-cols-5 gap-2">{Object.entries(chart.derived.fiveElements).map(([name,count])=><div className="border bg-background p-3 text-center" key={name}><strong>{name}</strong><p className="mt-1 text-sm text-muted-foreground">{count}</p></div>)}</div></article></div>}
+function Luck({chart}:{chart:BaziChart}){if(!chart.luck)return <div className="border-l-2 border-accent bg-card p-5"><h3 className="font-serif text-xl">大运未计算</h3><p className="mt-3 text-sm leading-7 text-muted-foreground">{chart.luckUnavailableReason??"本次请求未包含大运。"}</p></div>;const age=chart.luck.start.startAge;return <div><div className="flex flex-wrap items-start justify-between gap-4"><div><h3 className="font-serif text-xl">大运排布</h3><p className="mt-2 text-sm text-muted-foreground">{chart.luck.direction==="FORWARD"?"顺排":"逆排"} · 按传统折算约 {age.years}年{age.months}个月{age.days}日起运</p></div><Link href="/tools/bazi/rules" className="text-sm text-primary">查看起运规则 →</Link></div><p className="mt-4 border-l-2 border-accent pl-4 text-xs leading-6 text-muted-foreground">精度：传统时间近似。所列年份用于结构定位，不代表现代天文意义的秒级交运时刻。</p><div className="mt-6 grid gap-px border bg-border sm:grid-cols-2 lg:grid-cols-5">{chart.luck.cycles.map(cycle=><article className="bg-background p-4" key={cycle.index}><span className="tabular text-xs text-muted-foreground">{String(cycle.index).padStart(2,"0")}</span><p className="mt-2 font-serif text-2xl">{cycle.pillar.display}</p><p className="mt-2 text-xs text-muted-foreground">{cycle.startAge.years}岁—{cycle.endAge.years}岁</p>{cycle.startYear?<p className="mt-1 text-xs text-muted-foreground">约 {cycle.startYear}—{cycle.endYear}</p>:null}</article>)}</div></div>}
+function Annual({chart}:{chart:BaziChart}){return <div><h3 className="font-serif text-xl">未来十年流年干支</h3><p className="mt-2 text-sm text-muted-foreground">仅展示确定性的年份干支及所属大运结构，不提供吉凶、评分或预测。</p><div className="mt-5 grid gap-px border bg-border sm:grid-cols-2 lg:grid-cols-5">{chart.annualCycles.map(item=><div className="bg-background p-4" key={item.year}><span className="tabular text-xs text-muted-foreground">{item.year}</span><p className="mt-2 font-serif text-xl">{item.pillar.display}</p>{item.luckPillar?<p className="mt-2 text-xs text-muted-foreground">大运 {item.luckPillar.display}</p>:null}</div>)}</div></div>}
+function Trace({chart}:{chart:BaziChart}){return <div><div className="flex flex-wrap items-center justify-between gap-3"><div><h3 className="font-serif text-xl">排盘依据</h3><p className="mt-2 text-sm text-muted-foreground">{chart.ruleset.name} · 引擎 {chart.engineVersion} · 规则 {chart.ruleSetVersion}</p><p className="mt-1 text-xs text-muted-foreground">历法：{chart.providers.solarTerms.provider} {chart.providers.solarTerms.version} · 验证状态：已通过玄象回归测试</p><p className="mt-1 font-mono text-[11px] text-muted-foreground">{chart.calculationFingerprint}</p></div><Link href="/techniques/sizhu-mingli" className="inline-flex items-center gap-2 text-sm text-primary"><BookOpen className="size-4"/>规则知识档案</Link></div><p className="mt-5 border-l-2 border-accent pl-4 text-sm leading-6 text-muted-foreground">这是一套排盘约定，不代表所有传统流派采用完全相同规则。</p><ol className="mt-6 border-l">{chart.trace.map((item,index)=><li className="relative ml-5 border-b py-5 last:border-b-0" key={item.id}><span className="absolute -left-[1.65rem] top-6 grid size-5 place-items-center rounded-full border bg-background text-[10px]">{index+1}</span><div className="flex flex-wrap items-center gap-2"><h4 className="font-medium">{item.label}</h4><Badge>{STEP_KIND_LABELS[item.stepKind]}</Badge><Badge>{item.rule}</Badge></div><p className="mt-2 text-sm leading-7 text-muted-foreground">{item.description}</p>{item.source?<p className="research-only mt-2 text-xs text-muted-foreground">核验来源：{item.source}</p>:null}</li>)}</ol><p className="mt-6 text-xs leading-6 text-muted-foreground">推演结果用于传统术数研究与文化参考，不应作为医疗、法律、投资或其他重大人生决策依据。</p></div>}

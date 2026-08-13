@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 import { KnowledgeBrowser } from "@/components/knowledge/knowledge-browser";
-import { concepts } from "@/data/concepts";
+import { knowledgeService } from "@/lib/services/knowledge-service";
 
 export const metadata: Metadata = {
   title: "知识库",
   description: "检索中国传统思想中的核心概念、历史来源与知识关联。",
 };
 
-export default function KnowledgePage() {
+export default async function KnowledgePage() {
+  const records = await knowledgeService.listConcepts();
+  const concepts = records.map((item) => ({ name: item.name, slug: item.slug, aliases: item.aliases, system: item.categories[0] ?? "未分类", era: item.historicalContext ?? "时代待校订", summary: item.summary }));
   return (
     <div className="page-shell max-w-6xl">
       <header className="grid gap-7 border-b pb-12 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-end">
@@ -22,7 +24,7 @@ export default function KnowledgePage() {
         </p>
       </header>
       <div className="pt-10">
-        <KnowledgeBrowser />
+        <KnowledgeBrowser concepts={concepts} />
       </div>
     </div>
   );

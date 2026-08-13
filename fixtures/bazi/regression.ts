@@ -1,0 +1,19 @@
+import type { BirthInput } from "../../lib/bazi/types";
+export type FixtureTier="A"|"B"|"C";
+export interface BaziFixture { id:string; input:BirthInput; expected:{year:string;month:string;day:string;hour:string|null}; verification:string; tier:FixtureTier }
+const input=(date:string,time:string,timezone:string):BirthInput=>{const[y,m,d]=date.split("-").map(Number),[hour,minute]=time.split(":").map(Number);return{calendarType:"GREGORIAN",date:{year:y,month:m,day:d},time:{hour,minute},timezone,timePrecision:"MINUTE",ruleSetId:"STANDARD_ZIPING"};};
+export const BAZI_FIXTURES:BaziFixture[]=[
+ {id:"jiazi-epoch-utc",input:input("2000-01-07","00:30","UTC"),expected:{year:"己卯",month:"丁丑",day:"甲子",hour:"甲子"},verification:"甲子日循环基准；以公开 Julian Day 公式独立复核。",tier:"B"},
+ {id:"lichun-2024-before",input:input("2024-02-04","16:26","Asia/Shanghai"),expected:{year:"癸卯",month:"乙丑",day:"戊戌",hour:"庚申"},verification:"香港天文台节气表 + 独立日柱 JD 公式。",tier:"A"},
+ {id:"lichun-2024-after",input:input("2024-02-04","16:28","Asia/Shanghai"),expected:{year:"甲辰",month:"丙寅",day:"戊戌",hour:"庚申"},verification:"香港天文台节气表 + 独立日柱 JD 公式。",tier:"A"},
+ {id:"lunar-new-year-2024",input:input("2024-02-10","08:30","Asia/Shanghai"),expected:{year:"甲辰",month:"丙寅",day:"甲辰",hour:"戊辰"},verification:"香港天文台公农历表 + 独立日柱 JD 公式。",tier:"A"},
+ {id:"lichun-1990-after",input:input("1990-02-04","11:32","Asia/Shanghai"),expected:{year:"庚午",month:"戊寅",day:"庚子",hour:"壬午"},verification:"历法适配器交叉路径 + 独立日柱 JD 公式。",tier:"B"},
+ {id:"new-york-standard",input:input("2024-01-01","20:15","America/New_York"),expected:{year:"癸卯",month:"甲子",day:"甲子",hour:"甲戌"},verification:"IANA tzdb + 独立日柱 JD 公式。",tier:"B"},
+ {id:"leap-day",input:input("2024-02-29","23:30","Asia/Shanghai"),expected:{year:"甲辰",month:"丙寅",day:"癸亥",hour:"壬子"},verification:"公历闰日、适配器与独立 JD 公式。",tier:"B"},
+ {id:"utc-new-year",input:input("2025-01-01","00:00","UTC"),expected:{year:"甲辰",month:"丙子",day:"庚午",hour:"丙子"},verification:"跨公历年规则回归 + 独立 JD 公式。",tier:"B"},
+ {id:"jingzhe-2024-before",input:input("2024-03-05","10:21","Asia/Shanghai"),expected:{year:"甲辰",month:"丙寅",day:"戊辰",hour:"丁巳"},verification:"香港天文台惊蛰分钟 + 独立 JD 公式。",tier:"A"},
+ {id:"jingzhe-2024-after",input:input("2024-03-05","10:23","Asia/Shanghai"),expected:{year:"甲辰",month:"丁卯",day:"戊辰",hour:"丁巳"},verification:"香港天文台惊蛰分钟 + 独立 JD 公式。",tier:"A"},
+];
+
+const verifiedRows=`1901-02-04|19:30|Asia/Shanghai|庚子|己丑|癸丑|壬戌 1912-01-01|06:15|Asia/Hong_Kong|辛亥|庚子|丙子|辛卯 1949-10-01|12:00|Asia/Shanghai|己丑|癸酉|甲子|庚午 1950-02-17|05:40|Asia/Hong_Kong|庚寅|戊寅|癸未|乙卯 1969-07-20|22:56|America/New_York|己酉|辛未|丙申|己亥 1978-12-18|09:30|Asia/Shanghai|戊午|甲子|甲寅|己巳 1984-02-02|23:00|Asia/Tokyo|癸亥|乙丑|丙寅|戊子 1984-02-04|08:00|UTC|癸亥|乙丑|戊辰|丙辰 1997-07-01|00:30|Asia/Hong_Kong|丁丑|丙午|甲辰|甲子 2000-01-01|12:00|UTC|己卯|丙子|戊午|戊午 2000-02-29|06:45|Europe/London|庚辰|戊寅|丁巳|癸卯 2008-08-08|20:08|Asia/Shanghai|戊子|庚申|庚辰|丙戌 2008-12-31|23:30|America/Los_Angeles|戊子|甲子|乙巳|丙子 2012-06-30|12:00|Australia/Sydney|壬辰|丙午|壬戌|丙午 2024-01-01|00:30|Asia/Tokyo|癸卯|甲子|甲子|甲子 2024-02-10|12:00|UTC|甲辰|丙寅|甲辰|庚午 2024-12-31|23:59|Europe/London|甲辰|丙子|己巳|甲子 2025-02-03|10:00|America/New_York|乙巳|戊寅|癸卯|丁巳 2026-01-01|06:00|Australia/Sydney|乙巳|戊子|乙亥|己卯 2026-02-04|04:03|Asia/Shanghai|丙午|庚寅|己酉|丙寅 2026-08-10|09:45|Asia/Tokyo|丙午|丙申|丙辰|癸巳 2033-12-22|16:00|America/Los_Angeles|癸丑|甲子|丁未|戊申 2044-04-04|08:00|Europe/London|甲子|戊辰|癸未|丙辰 2050-01-01|00:00|UTC|己巳|丙子|辛巳|戊子 2050-02-03|23:45|Asia/Shanghai|庚午|戊寅|甲寅|甲子 2050-06-21|11:34|Asia/Hong_Kong|庚午|壬午|壬申|丙午 2077-09-09|14:20|America/New_York|丁酉|己酉|甲寅|辛未 2083-02-03|23:59|Asia/Shanghai|癸卯|甲寅|丁未|庚子 2099-12-31|18:00|Australia/Sydney|己未|丙子|壬寅|己酉 2100-12-31|22:00|UTC|庚申|戊子|丁未|辛亥`;
+BAZI_FIXTURES.push(...verifiedRows.split(/\s+/).map((row,index)=>{const[date,time,timezone,year,month,day,hour]=row.split("|");return{id:`tier-b-${index+1}`,input:input(date,time,timezone),expected:{year,month,day,hour},verification:"独立 Julian Day 日柱公式、IANA 时区不变量与固定节气数据交叉确认。",tier:"B" as const};}));

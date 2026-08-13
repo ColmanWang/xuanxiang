@@ -1,0 +1,4 @@
+import {describe,expect,it,vi} from "vitest";
+import {validatePassageEntityLinks} from "@/lib/services/passage-link-validation-service";
+function reader(existing:Set<string>){const model={findUnique:vi.fn(async({where}:{where:{id:string};select:{id:true}})=>existing.has(where.id)?{id:where.id}:null)};return{concept:model,classic:model,person:model,school:model,technique:model,textPassage:model}}
+describe("passage entity integrity",()=>{it("accepts valid endpoints",async()=>{await expect(validatePassageEntityLinks(reader(new Set(["p","wuxing"])),[{passageId:"p",entityType:"CONCEPT",entityId:"wuxing"}])).resolves.toBeUndefined()});it("rejects an orphan link",async()=>{await expect(validatePassageEntityLinks(reader(new Set(["p"])),[{passageId:"p",entityType:"CONCEPT",entityId:"missing"}])).rejects.toThrow("Invalid passage link")})});

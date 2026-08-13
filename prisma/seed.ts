@@ -1,0 +1,101 @@
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient, type GraphEntityType } from "@prisma/client";
+import { graphEntityRecords } from "../data/graph/nodes";
+import { graphEdges } from "../data/graph/edges";
+import { validateRelations } from "../lib/services/relation-validation-service";
+import { importClassicText } from "../lib/importers/classic-text/importer";
+import { laoziSample, shangshuSample, zhouyiSample, zhuangziSample } from "./seed-data/classics";
+import { sanmingTonghuiRuleSample } from "./seed-data/classics/sanming-tonghui";
+
+const connectionString = process.env.DATABASE_URL;
+if (!connectionString) throw new Error("DATABASE_URL is required");
+const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
+const upperType = (value: string) => value.toUpperCase() as GraphEntityType;
+const reviewedAt = new Date("2026-08-09T00:00:00.000Z");
+
+const definitionById: Record<string, string> = {
+  yinyang: "描述相反相成、消长转化关系的基本思想范畴。",
+  wuxing: "以木、火、土、金、水五类要素及其关系说明变化秩序的模型。",
+  bagua: "由阴阳爻组合而成的八种基本卦象。",
+  xiangshu: "以象、数及其结构关系解释变化的易学方法范畴。",
+  yili: "侧重经典义旨、哲理与人伦秩序的解释路径。",
+  tiangan: "甲至癸十种用于纪时、次序与分类的符号。",
+  dizhi: "子至亥十二种用于纪时、方位与周期的符号。",
+  hetu: "传统易学中表达数理秩序的图式。",
+  luoshu: "以九宫数序表达方位与秩序的传统图式。",
+};
+
+async function seedEntities() {
+  for (const item of graphEntityRecords) {
+    const common = { id: item.entityId, slug: item.slug, aliases: item.aliases ?? [], summary: item.summary ?? "条目正在整理。", categories: item.category ? [item.category] : [], editorialStatus: "BASIC" as const, lastReviewedAt: reviewedAt };
+    if (item.entityType === "concept") await prisma.concept.upsert({ where: { id: item.entityId }, update: { ...common, name: item.title, definition: definitionById[item.entityId] }, create: { ...common, name: item.title, definition: definitionById[item.entityId], historicalContext: item.dynasty ? `主要历史语境：${item.dynasty}。` : undefined } });
+    if (item.entityType === "classic") await prisma.classic.upsert({ where: { id: item.entityId }, update: { ...common, title: item.title, period: item.dynasty }, create: { ...common, title: item.title, period: item.dynasty, themes: item.category ? [item.category] : [], attributionStatus: "UNKNOWN" } });
+    if (item.entityType === "person") await prisma.person.upsert({ where: { id: item.entityId }, update: { ...common, name: item.title, period: item.dynasty }, create: { ...common, name: item.title, period: item.dynasty, role: item.category } });
+    if (item.entityType === "school") await prisma.school.upsert({ where: { id: item.entityId }, update: { ...common, name: item.title, period: item.dynasty }, create: { ...common, name: item.title, period: item.dynasty, classificationStatus: "INFERRED" } });
+    if (item.entityType === "technique") await prisma.technique.upsert({ where: { id: item.entityId }, update: { ...common, name: item.title, period: item.dynasty, category: item.category ?? "术数" }, create: { ...common, name: item.title, period: item.dynasty, category: item.category ?? "术数", definition: item.summary, toolPath: item.entityId === "sizhu-mingli" ? "/tools/bazi" : undefined } });
+    if (item.entityType === "dynasty") await prisma.dynasty.upsert({ where: { id: item.entityId }, update: { name: item.title, slug: item.slug, summary: item.summary }, create: { id: item.entityId, name: item.title, slug: item.slug, summary: item.summary, editorialStatus: "BASIC" } });
+  }
+  await prisma.classic.upsert({ where: { id: "shangshu" }, update: { title:"尚书",slug:"shangshu",aliases:["书经"],summary:"汇集上古政治文献与历史叙事的重要经典，篇章形成与传承问题复杂。",categories:["经学"],period:"先秦至汉代传承",editorialStatus:"BASIC",lastReviewedAt:reviewedAt }, create: { id:"shangshu",title:"尚书",slug:"shangshu",aliases:["书经"],summary:"汇集上古政治文献与历史叙事的重要经典，篇章形成与传承问题复杂。",categories:["经学"],period:"先秦至汉代传承",attributionStatus:"COMPOSITE",editorialStatus:"BASIC",lastReviewedAt:reviewedAt } });
+}
+
+const sources = [
+  { id: "source-zhouyi", type: "PRIMARY_TEXT" as const, title: "《周易》", dynastyOrYear: "先秦至汉初传承形成", note: "用于易学相关条目的原典定位。" },
+  { id: "source-laozi", type: "PRIMARY_TEXT" as const, title: "《老子》", dynastyOrYear: "先秦", note: "作者与文本形成问题按具体版本研究处理。" },
+  { id: "source-zhuangzi", type: "PRIMARY_TEXT" as const, title: "《庄子》", dynastyOrYear: "战国至汉初" },
+  { id: "source-hanshu", type: "PRIMARY_TEXT" as const, title: "《汉书》", author: "班固", dynastyOrYear: "东汉" },
+  { id: "source-sanguozhi", type: "PRIMARY_TEXT" as const, title: "《三国志》", author: "陈寿", dynastyOrYear: "西晋" },
+  { id: "source-jinshu", type: "PRIMARY_TEXT" as const, title: "《晋书》", author: "房玄龄等", dynastyOrYear: "唐" },
+  { id: "source-baopuzi", type: "PRIMARY_TEXT" as const, title: "《抱朴子》", author: "葛洪", dynastyOrYear: "东晋" },
+  { id: "source-huangji", type: "PRIMARY_TEXT" as const, title: "《皇极经世》", author: "邵雍", dynastyOrYear: "北宋" },
+  { id: "source-yuanhai", type: "PRIMARY_TEXT" as const, title: "《渊海子平》", dynastyOrYear: "宋元文献系统" },
+  { id: "source-sanming", type: "PRIMARY_TEXT" as const, title: "《三命通会》", author: "万民英", dynastyOrYear: "明" },
+  { id: "source-sanming-gujin-472", type: "PRIMARY_TEXT" as const, title: "《古今图书集成·博物汇编·艺术典》卷六百二十四所收《三命通会·消息赋下》", author: "《三命通会》万民英撰；《古今图书集成》陈梦雷等编", dynastyOrYear: "清康熙间编纂本数字影像", edition: "Internet Archive 扫描件经 Wikimedia Commons / 维基文库承载，Volume 472，影像页 66、69", publisher: "维基文库数字承载", url: "https://zh.wikisource.org/wiki/Index:Gujin_Tushu_Jicheng,_Volume_472_(1700-1725).djvu", note: "影像已人工打开核对；维基文库转录页标为尚未校对，玄象仅录入与规则直接相关的短句。" },
+  { id: "source-zangshu", type: "PRIMARY_TEXT" as const, title: "《葬书》", dynastyOrYear: "传统归属有待版本考辨" },
+  { id: "source-shangshu", type: "PRIMARY_TEXT" as const, title: "《尚书》", dynastyOrYear: "先秦至汉代传承", note: "篇章与文本系统复杂；当前仅作开发样例来源。" },
+] as const;
+
+async function seedSources() {
+  for (const source of sources) await prisma.source.upsert({ where: { id: source.id }, update: source, create: source });
+  const citations = [
+    { id: "citation-wuxing", sourceId: "source-zhouyi", subjectType: "CONCEPT" as const, subjectId: "wuxing", locator: "传文相关篇章", note: "支持五行进入易学解释传统的条目背景；具体语句待版本校订。", citationType: "HISTORICAL_CONTEXT" as const },
+    { id: "citation-zhouyi", sourceId: "source-zhouyi", subjectType: "CLASSIC" as const, subjectId: "zhouyi", note: "条目所述文本结构以传世《周易》为对象。", citationType: "GENERAL" as const },
+    { id: "citation-wangbi", sourceId: "source-sanguozhi", subjectType: "PERSON" as const, subjectId: "wangbi", locator: "魏书相关传记", note: "用于人物基本时代背景；精确版本页码待补。", citationType: "HISTORICAL_CONTEXT" as const },
+    { id: "citation-jingfang", sourceId: "source-hanshu", subjectType: "PERSON" as const, subjectId: "jingfang", locator: "京房传", citationType: "HISTORICAL_CONTEXT" as const },
+  ];
+  for (const citation of citations) await prisma.citation.upsert({ where: { id: citation.id }, update: { ...citation, evidenceStatus: "DOCUMENTED" }, create: { ...citation, evidenceStatus: "DOCUMENTED" } });
+}
+
+async function seedClassicTexts() {
+  for (const payload of [zhouyiSample, laoziSample, zhuangziSample, shangshuSample, sanmingTonghuiRuleSample]) await importClassicText(payload, prisma);
+  const passageCitations = [
+    { id:"citation-wuxing", passageId:"passage-shangshu-wuxing", locator:"洪范", sourceId:"source-shangshu", subjectType:"CONCEPT" as const, subjectId:"wuxing", citationType:"DEFINITION" as const, evidenceStatus:"DOCUMENTED" as const, note:"支持五行名称及基本次序；示例分段与标点待人工校订。" },
+    { id:"citation-yinyang-passage",passageId:"passage-zhouyi-yinyang",locator:"系辞上传",sourceId:"source-zhouyi",subjectType:"CONCEPT" as const,subjectId:"yinyang",citationType:"DEFINITION" as const,evidenceStatus:"DOCUMENTED" as const,note:"用于阴阳概念的原典定位；示例文本待版本校订。" },
+    { id:"citation-bagua-passage",passageId:"passage-zhouyi-taiji",locator:"系辞上传",sourceId:"source-zhouyi",subjectType:"CONCEPT" as const,subjectId:"bagua",citationType:"HISTORICAL_CONTEXT" as const,evidenceStatus:"DOCUMENTED" as const,note:"用于八卦相关条目的原典定位。" },
+    { id:"citation-rule-luck-direction",passageId:"passage-sanming-direction-2",locator:"《古今图书集成》艺术典卷六百二十四，星命部汇考六十，《三命通会》三十二〈消息赋下〉，影像页69，“男迎女送”释文",sourceId:"source-sanming-gujin-472",subjectType:"TECHNIQUE" as const,subjectId:"sizhu-mingli",citationType:"RELATION_EVIDENCE" as const,evidenceStatus:"TRADITIONAL" as const,note:"支持阳男阴女顺行的后世表述；结合相邻文句说明阴阳男女依逆顺行运。不能据此宣称为该规则最早来源。" },
+    { id:"citation-rule-luck-start",passageId:"passage-sanming-luck-start",locator:"《古今图书集成》艺术典卷六百二十四，星命部汇考六十，《三命通会》三十二〈消息赋下〉，影像页69，“依逆顺行运折除”释文",sourceId:"source-sanming-gujin-472",subjectType:"TECHNIQUE" as const,subjectId:"sizhu-mingli",citationType:"RELATION_EVIDENCE" as const,evidenceStatus:"TRADITIONAL" as const,note:"支持按节气日数定岁数及折年关系；不支持玄象对余小时、余分钟与截断顺序的全部工程细节。" },
+  ];
+  for (const citation of passageCitations) await prisma.citation.upsert({ where:{id:citation.id},update:citation,create:citation });
+}
+
+async function seedRelations() {
+  const entityTypeById = new Map(graphEntityRecords.map((item) => [item.entityId, upperType(item.entityType)]));
+  const relations = graphEdges.map((item) => ({ ...item, sourceType: entityTypeById.get(item.source)!, sourceId: item.source, targetType: entityTypeById.get(item.target)!, targetId: item.target }));
+  await validateRelations(prisma, relations);
+  for (const relation of relations) await prisma.relation.upsert({ where: { id: relation.id }, update: { sourceType: relation.sourceType, sourceId: relation.source, targetType: relation.targetType, targetId: relation.target, relationType: relation.type, evidenceStatus: relation.evidenceStatus, note: relation.note, sourceNote: relation.sourceNote }, create: { id: relation.id, sourceType: relation.sourceType, sourceId: relation.source, targetType: relation.targetType, targetId: relation.target, relationType: relation.type, evidenceStatus: relation.evidenceStatus, note: relation.note, sourceNote: relation.sourceNote } });
+}
+
+async function seedInterpretations() {
+  await prisma.interpretation.upsert({ where: { id: "interpretation-wangbi-yili" }, update: {}, create: { id: "interpretation-wangbi-yili", subjectType: "CONCEPT", subjectId: "yili", title: "王弼的义理解释路径", summary: "以王弼注本为中心观察其对《周易》义旨与言象关系的解释。", attributedToPersonId: "wangbi", period: "魏晋", evidenceStatus: "DOCUMENTED", editorialStatus: "BASIC" } });
+  await prisma.interpretation.upsert({ where: { id: "interpretation-najia-jingfang" }, update: {}, create: { id: "interpretation-najia-jingfang", subjectType: "TECHNIQUE", subjectId: "najia", title: "纳甲与京房的传统归属", summary: "后世传统常将纳甲方法与京房联系；具体形成过程仍需依文献层次考察。", attributedToPersonId: "jingfang", period: "汉代传统及后世传承", evidenceStatus: "TRADITIONAL", editorialStatus: "BASIC" } });
+}
+
+async function main() {
+  await seedEntities();
+  await seedSources();
+  await seedClassicTexts();
+  await seedRelations();
+  await seedInterpretations();
+  console.log(`Seeded ${graphEntityRecords.length + 1} entities, ${graphEdges.length} relations, ${sources.length} sources and classic text samples.`);
+}
+
+main().finally(() => prisma.$disconnect());
