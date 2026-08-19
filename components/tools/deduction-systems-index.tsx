@@ -20,7 +20,7 @@ export function DeductionSystemsIndex() {
           return available ? <Link href={`/tools/${system.slug}`} key={system.slug} className="group grid gap-5 border-b px-5 py-7 transition-colors last:border-b-0 hover:bg-card md:grid-cols-[5rem_1fr_1.4fr_1fr_8rem] md:items-center">{content}</Link> : <article key={system.slug} className="group grid gap-5 border-b px-5 py-7 opacity-75 last:border-b-0 md:grid-cols-[5rem_1fr_1.4fr_1fr_8rem] md:items-center">{content}</article>;
         })}
       </div>
-      <aside className="mt-12 grid gap-5 border-l-2 border-accent bg-card p-6 sm:grid-cols-[auto_1fr] sm:items-start"><GitBranch className="size-6 text-accent" strokeWidth={1.5} aria-hidden="true" /><div><h2 className="font-serif text-xl">计算层与解释层分离</h2><p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">四柱推演已接入确定性历法内核；输入、规则、计算过程与输出均不依赖页面组件，也不调用语言模型。其他推演系统仍在建设中。</p></div></aside>
+      <aside className="mt-12 grid gap-5 border-l-2 border-accent bg-card p-6 sm:grid-cols-[auto_1fr] sm:items-start"><GitBranch className="size-6 text-accent" strokeWidth={1.5} aria-hidden="true" /><div><h2 className="font-serif text-xl">计算层与解释层分离</h2><p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">四柱与六爻已接入确定性推演内核；输入、规则、计算过程与输出均不依赖页面组件，也不调用语言模型。其他推演系统仍在建设中。</p></div></aside>
     </div>
   );
 }

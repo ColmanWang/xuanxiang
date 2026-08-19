@@ -1,0 +1,4 @@
+import type { LiuyaoRuleSet } from "./types";
+export const LIUYAO_CALENDAR_PROVIDERS={timezone:{provider:"IANA tzdb via Temporal",version:"runtime"},solarTerms:{provider:"lunar-typescript",version:"1.8.6"},dayGanzhi:{provider:"玄象 Julian Day",version:"1.0.0"}} as const;
+function fnv1a(value:string){let hash=0x811c9dc5;for(const char of value){hash^=char.charCodeAt(0);hash=Math.imul(hash,0x01000193)}return(hash>>>0).toString(16).padStart(8,"0")}
+export function liuyaoFingerprint(engineVersion:string,rules:LiuyaoRuleSet){const policies=Object.values(rules.policies).map(item=>`${item.id}@${item.version}`).sort().join(",");const providers=Object.values(LIUYAO_CALENDAR_PROVIDERS).map(item=>`${item.provider}@${item.version}`).sort().join(",");return`xx-liuyao-${fnv1a([engineVersion,rules.id,rules.version,policies,providers].join("|"))}`}

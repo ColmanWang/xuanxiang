@@ -24,6 +24,21 @@ describe("graph adapter", () => {
     expect(projection.nodes).toHaveLength(2);
     expect(projection.edges.some((edge) => edge.source === "zhouyi" && edge.target === "yixue")).toBe(true);
   });
+
+  it("includes the Liuyao knowledge cluster without collapsing it into Zhouyi", () => {
+    const liuyao = graphNodes.find((node) => node.id === "liuyao");
+    expect(liuyao).toMatchObject({
+      entityType: "technique",
+      href: "/techniques/liuyao",
+    });
+    expect(["wenwang-gua", "bagong", "shi-ying", "liu-qin", "liu-shen", "moving-line", "changed-hexagram", "hidden-spirit", "month-command", "day-command"]
+      .every((id) => graphNodes.some((node) => node.id === id))).toBe(true);
+    expect(graphEdges).toContainEqual(expect.objectContaining({
+      source: "wenwang-gua",
+      target: "zhouyi",
+      type: "DERIVED_FROM",
+    }));
+  });
 });
 
 describe("relation lineage", () => {

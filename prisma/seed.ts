@@ -23,6 +23,16 @@ const definitionById: Record<string, string> = {
   dizhi: "子至亥十二种用于纪时、方位与周期的符号。",
   hetu: "传统易学中表达数理秩序的图式。",
   luoshu: "以九宫数序表达方位与秩序的传统图式。",
+  "wenwang-gua": "后世以六十四卦、动变、纳甲等规则组织的一类传统易占体系。",
+  bagong: "将六十四卦分属八个卦宫，并标识本宫、一至五世、游魂与归魂位置的分类结构。",
+  "shi-ying": "在八宫卦序中确定世爻与应爻位置的六爻排盘结构。",
+  "liu-qin": "以卦宫五行与爻支五行的生克关系配置的传统六爻术语标签。",
+  "liu-shen": "依据占卜日干确定起始项，并从初爻向上排列的六种传统标识。",
+  "moving-line": "由老阴或老阳输入标记、在变卦生成时转换阴阳的爻位。",
+  "changed-hexagram": "将本卦动爻逐一转换阴阳后得到的卦象。",
+  "hidden-spirit": "六爻排盘中用于表达未在当前卦爻直接呈现之六亲的结构术语；具体规则尚待校核。",
+  "month-command": "六爻排盘中依据节气月序确定的月支历法上下文。",
+  "day-command": "六爻排盘中依据起卦当地日期干支确定的日序上下文。",
 };
 
 async function seedEntities() {
@@ -32,7 +42,10 @@ async function seedEntities() {
     if (item.entityType === "classic") await prisma.classic.upsert({ where: { id: item.entityId }, update: { ...common, title: item.title, period: item.dynasty }, create: { ...common, title: item.title, period: item.dynasty, themes: item.category ? [item.category] : [], attributionStatus: "UNKNOWN" } });
     if (item.entityType === "person") await prisma.person.upsert({ where: { id: item.entityId }, update: { ...common, name: item.title, period: item.dynasty }, create: { ...common, name: item.title, period: item.dynasty, role: item.category } });
     if (item.entityType === "school") await prisma.school.upsert({ where: { id: item.entityId }, update: { ...common, name: item.title, period: item.dynasty }, create: { ...common, name: item.title, period: item.dynasty, classificationStatus: "INFERRED" } });
-    if (item.entityType === "technique") await prisma.technique.upsert({ where: { id: item.entityId }, update: { ...common, name: item.title, period: item.dynasty, category: item.category ?? "术数" }, create: { ...common, name: item.title, period: item.dynasty, category: item.category ?? "术数", definition: item.summary, toolPath: item.entityId === "sizhu-mingli" ? "/tools/bazi" : undefined } });
+    if (item.entityType === "technique") {
+      const toolPath = item.entityId === "sizhu-mingli" ? "/tools/bazi" : item.entityId === "liuyao" ? "/tools/liuyao" : undefined;
+      await prisma.technique.upsert({ where: { id: item.entityId }, update: { ...common, name: item.title, period: item.dynasty, category: item.category ?? "术数", definition: item.summary, toolPath }, create: { ...common, name: item.title, period: item.dynasty, category: item.category ?? "术数", definition: item.summary, toolPath } });
+    }
     if (item.entityType === "dynasty") await prisma.dynasty.upsert({ where: { id: item.entityId }, update: { name: item.title, slug: item.slug, summary: item.summary }, create: { id: item.entityId, name: item.title, slug: item.slug, summary: item.summary, editorialStatus: "BASIC" } });
   }
   await prisma.classic.upsert({ where: { id: "shangshu" }, update: { title:"尚书",slug:"shangshu",aliases:["书经"],summary:"汇集上古政治文献与历史叙事的重要经典，篇章形成与传承问题复杂。",categories:["经学"],period:"先秦至汉代传承",editorialStatus:"BASIC",lastReviewedAt:reviewedAt }, create: { id:"shangshu",title:"尚书",slug:"shangshu",aliases:["书经"],summary:"汇集上古政治文献与历史叙事的重要经典，篇章形成与传承问题复杂。",categories:["经学"],period:"先秦至汉代传承",attributionStatus:"COMPOSITE",editorialStatus:"BASIC",lastReviewedAt:reviewedAt } });

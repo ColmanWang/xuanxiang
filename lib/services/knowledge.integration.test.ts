@@ -5,10 +5,17 @@ import { searchKnowledge } from "@/lib/services/search-service";
 
 describe("knowledge database integration", () => {
   it("reads core entries and returns null for an unknown slug", async () => {
-    const [wuxing, wangbi, zhouyi, missing] = await Promise.all([
-      getKnowledgeEntry("concept", "wuxing"), getKnowledgeEntry("person", "wangbi"), getKnowledgeEntry("classic", "zhouyi"), getKnowledgeEntry("concept", "not-a-real-entry"),
+    const [wuxing, wangbi, zhouyi, liuyao, najia, missing] = await Promise.all([
+      getKnowledgeEntry("concept", "wuxing"),
+      getKnowledgeEntry("person", "wangbi"),
+      getKnowledgeEntry("classic", "zhouyi"),
+      getKnowledgeEntry("technique", "liuyao"),
+      getKnowledgeEntry("technique", "najia"),
+      getKnowledgeEntry("concept", "not-a-real-entry"),
     ]);
     expect(wuxing?.title).toBe("五行"); expect(wangbi?.title).toBe("王弼"); expect(zhouyi?.title).toBe("周易"); expect(missing).toBeNull();
+    expect(liuyao).toMatchObject({ title: "六爻", entityType: "technique", toolPath: "/tools/liuyao" });
+    expect(najia).toMatchObject({ title: "纳甲", entityType: "technique" });
     expect(wuxing?.references[0]?.sourceTitle).toBe("《尚书》");
   });
   it("projects domain records and relations into the graph", async () => {

@@ -1,0 +1,7 @@
+import { TRIGRAM_LIST,trigramFromLines } from "./trigrams";
+import type { Hexagram,YinYang } from "./types";
+const KING_WEN_NAMES=["乾","坤","屯","蒙","需","讼","师","比","小畜","履","泰","否","同人","大有","谦","豫","随","蛊","临","观","噬嗑","贲","剥","复","无妄","大畜","颐","大过","坎","离","咸","恒","遁","大壮","晋","明夷","家人","睽","蹇","解","损","益","夬","姤","萃","升","困","井","革","鼎","震","艮","渐","归妹","丰","旅","巽","兑","涣","节","中孚","小过","既济","未济"] as const;
+const MATRIX:Record<string,string[]>={QIAN:["乾","履","同人","无妄","姤","讼","遁","否"],DUI:["夬","兑","革","随","大过","困","咸","萃"],LI:["大有","睽","离","噬嗑","鼎","未济","旅","晋"],ZHEN:["大壮","归妹","丰","震","恒","解","小过","豫"],XUN:["小畜","中孚","家人","益","巽","涣","渐","观"],KAN:["需","节","既济","屯","井","坎","蹇","比"],GEN:["大畜","损","贲","颐","蛊","蒙","艮","剥"],KUN:["泰","临","明夷","复","升","师","谦","坤"]};
+const byName=new Map<string,number>(KING_WEN_NAMES.map((name,index)=>[name,index+1]));
+export const HEXAGRAMS:Hexagram[]=TRIGRAM_LIST.flatMap((lower,lowerIndex)=>TRIGRAM_LIST.map((upper)=>{const name=MATRIX[upper.id][lowerIndex];return{id:`${lower.id}-${upper.id}`,number:byName.get(name)!,name,lowerTrigram:lower,upperTrigram:upper,lines:[...lower.bits,...upper.bits] as Hexagram["lines"]}}));
+export function hexagramFromLines(lines:readonly YinYang[]):Hexagram{if(lines.length!==6)throw new Error("六爻必须正好六条");const lower=trigramFromLines(lines.slice(0,3)),upper=trigramFromLines(lines.slice(3));return HEXAGRAMS.find(item=>item.lowerTrigram.id===lower.id&&item.upperTrigram.id===upper.id)!}

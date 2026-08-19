@@ -11,9 +11,9 @@ export const deductionSystems: DeductionSystem[] = [
   {
     name: "六爻推演",
     slug: "liuyao",
-    description: "记录本卦、变爻与卦变关系，保留完整起卦依据。",
-    basis: "六十四卦 · 爻变",
-    status: "planned",
+    description: "依据六个爻值生成本卦、动爻、变卦、纳甲、世应、六亲与六神结构。",
+    basis: "六十四卦 · 纳甲 · 世应",
+    status: "available",
   },
   {
     name: "紫微推演",

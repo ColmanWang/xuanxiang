@@ -53,6 +53,8 @@ pnpm bazi:calculate --date 1990-02-04 --time 11:32 --timezone Asia/Shanghai --tr
 pnpm calendar:verify-terms
 pnpm bazi:rules --provenance
 pnpm bazi:verify-foundation
+pnpm liuyao:calculate --lines 7,8,9,7,6,8 --datetime 2026-08-19T14:30 --timezone Asia/Shanghai --trace
+pnpm liuyao:verify-foundation
 ```
 
 ## 原典样例与导入
