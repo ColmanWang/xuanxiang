@@ -15,6 +15,7 @@ const navigation = [
   ["/classics", "典籍"],
   ["/graph", "图谱"],
   ["/tools", "推演"],
+  ["/ask", "问玄象"],
 ] as const;
 
 export function SiteHeader() {

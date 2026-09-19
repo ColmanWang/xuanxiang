@@ -3,15 +3,20 @@ import { LIUYAO_FULL_CHART_FIXTURES } from "@/fixtures/liuyao/full-charts";
 import { HEXAGRAMS } from "@/lib/liuyao/hexagrams";
 import { LIUYAO_ENGINE_VERSION } from "@/lib/liuyao/engine";
 import { getLiuyaoFoundationReadiness, validateLiuyaoRuleProvenance } from "@/lib/liuyao/readiness";
+import { getLiuyaoRuleProvenance } from "@/lib/liuyao/provenance";
+import { LIUYAO_KNOWN_DIFFERENCES } from "@/lib/liuyao/known-differences";
+import { LIUYAO_REGRESSION_MANIFEST } from "@/lib/liuyao/manifests";
 import { STANDARD_WENWANG_GUA } from "@/lib/liuyao/rules";
 
 export const dynamic = "force-dynamic";
 
-export default function LiuyaoVerificationPage() {
+export default async function LiuyaoVerificationPage() {
   if (process.env.NODE_ENV === "production") notFound();
 
   const readiness = getLiuyaoFoundationReadiness();
   const provenance = validateLiuyaoRuleProvenance();
+  const databaseProvenance = await getLiuyaoRuleProvenance();
+  const passageCount = databaseProvenance.reduce((sum, item) => sum + item.citations.filter((citation) => citation.passageId).length, 0);
   const tierCounts = LIUYAO_FULL_CHART_FIXTURES.reduce(
     (counts, fixture) => ({ ...counts, [fixture.tier]: counts[fixture.tier] + 1 }),
     { A: 0, B: 0, C: 0 },
@@ -51,6 +56,7 @@ export default function LiuyaoVerificationPage() {
           <dl className="mt-5 grid grid-cols-2 gap-3 text-sm">
             <dt>六十四卦</dt><dd>{HEXAGRAMS.length} / 64</dd>
             <dt>动变穷举</dt><dd>4096 / 4096</dd>
+            <dt>完整盘总数</dt><dd>{LIUYAO_REGRESSION_MANIFEST.fullChartFixtureCount}</dd>
             <dt>完整盘 Tier A</dt><dd>{tierCounts.A}</dd>
             <dt>完整盘 Tier B</dt><dd>{tierCounts.B}</dd>
             <dt>完整盘 Tier C</dt><dd>{tierCounts.C}</dd>
@@ -62,10 +68,15 @@ export default function LiuyaoVerificationPage() {
             <dt>Policies</dt><dd>{provenance.policyCount}</dd>
             <dt>References</dt><dd>{provenance.referenceCount}</dd>
             <dt>Passage-sourced</dt><dd>{provenance.sourcedPolicyIds.length}</dd>
+            <dt>Passage citations</dt><dd>{passageCount}</dd>
             <dt>Unsourced</dt><dd>{provenance.unsourcedPolicyIds.length}</dd>
           </dl>
-          <p className="mt-5 text-sm leading-6 text-muted-foreground">当前规则表现层已建立，但 Passage 级典据尚待人工校订。</p>
+          <p className="mt-5 text-sm leading-6 text-muted-foreground">纳甲、八宫、世应、六亲、六神已建立 Passage 链；数字转录仍待影像校订，月建完整典据仍有限。</p>
         </article>
+      </section>
+      <section className="mt-6 grid gap-6 lg:grid-cols-2">
+        <article className="border bg-card p-6"><h2 className="font-serif text-2xl">Known Differences</h2><div className="mt-5 space-y-4">{LIUYAO_KNOWN_DIFFERENCES.map((item)=><div key={item.id}><p className="text-sm">{item.summary}</p><p className="mt-1 text-xs leading-6 text-muted-foreground">{item.kind} · {item.status} · {item.impact}</p></div>)}</div></article>
+        <article className="border bg-card p-6"><h2 className="font-serif text-2xl">Hidden Spirits</h2><p className="mt-5 font-mono text-sm">NOT_IMPLEMENTED</p><p className="mt-3 text-sm leading-6 text-muted-foreground">已定位飞伏历史文本，但尚缺独立 Golden Dataset 与至少 20 条可靠 fixture，不进入稳定计算。</p></article>
       </section>
     </div>
   );

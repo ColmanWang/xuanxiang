@@ -7,24 +7,26 @@ datasource db {
 }
 
 model Concept {
-  id                String          @id
+  id                String            @id
   name              String
-  slug              String          @unique
-  aliases           String[]        @default([])
+  slug              String            @unique
+  aliases           String[]          @default([])
   summary           String
-  categories        String[]        @default([])
+  categories        String[]          @default([])
   definition        String?
   historicalContext String?
   development       Json?
   keyIdeas          Json?
   researchNotes     Json?
   content           String?
-  editorialStatus   EditorialStatus @default(DRAFT)
+  editorialStatus   EditorialStatus   @default(DRAFT)
+  dataCategory      DataCategory      @default(PRODUCTION_CONTENT)
+  publicationStatus PublicationStatus @default(PUBLISHED)
   lastReviewedAt    DateTime?
   dynastyId         String?
-  dynasty           Dynasty?        @relation(fields: [dynastyId], references: [id], onDelete: SetNull)
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
+  dynasty           Dynasty?          @relation(fields: [dynastyId], references: [id], onDelete: SetNull)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
 
   @@index([dynastyId])
   @@index([editorialStatus])
@@ -45,6 +47,8 @@ model Classic {
   historicalContext String?
   influence         String?
   editorialStatus   EditorialStatus   @default(DRAFT)
+  dataCategory      DataCategory      @default(PRODUCTION_CONTENT)
+  publicationStatus PublicationStatus @default(PUBLISHED)
   lastReviewedAt    DateTime?
   dynastyId         String?
   dynasty           Dynasty?          @relation(fields: [dynastyId], references: [id], onDelete: SetNull)
@@ -57,12 +61,12 @@ model Classic {
 }
 
 model Person {
-  id                String           @id
+  id                String            @id
   name              String
-  slug              String           @unique
-  aliases           String[]         @default([])
+  slug              String            @unique
+  aliases           String[]          @default([])
   summary           String
-  categories        String[]         @default([])
+  categories        String[]          @default([])
   birthYear         Int?
   deathYear         Int?
   period            String?
@@ -70,56 +74,62 @@ model Person {
   keyIdeas          Json?
   historicalContext String?
   influence         String?
-  editorialStatus   EditorialStatus  @default(DRAFT)
+  editorialStatus   EditorialStatus   @default(DRAFT)
+  dataCategory      DataCategory      @default(PRODUCTION_CONTENT)
+  publicationStatus PublicationStatus @default(PUBLISHED)
   lastReviewedAt    DateTime?
-  interpretations   Interpretation[] @relation("InterpretationPerson")
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
+  interpretations   Interpretation[]  @relation("InterpretationPerson")
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
 
   @@index([editorialStatus])
 }
 
 model School {
-  id                   String           @id
+  id                   String            @id
   name                 String
-  slug                 String           @unique
-  aliases              String[]         @default([])
+  slug                 String            @unique
+  aliases              String[]          @default([])
   summary              String
-  categories           String[]         @default([])
+  categories           String[]          @default([])
   period               String?
-  coreQuestions        String[]         @default([])
+  coreQuestions        String[]          @default([])
   keyIdeas             Json?
   historicalContext    String?
   development          Json?
   editorialNote        String?
-  classificationStatus EvidenceStatus   @default(INFERRED)
-  editorialStatus      EditorialStatus  @default(DRAFT)
+  classificationStatus EvidenceStatus    @default(INFERRED)
+  editorialStatus      EditorialStatus   @default(DRAFT)
+  dataCategory         DataCategory      @default(PRODUCTION_CONTENT)
+  publicationStatus    PublicationStatus @default(PUBLISHED)
   lastReviewedAt       DateTime?
-  interpretations      Interpretation[] @relation("InterpretationSchool")
-  createdAt            DateTime         @default(now())
-  updatedAt            DateTime         @updatedAt
+  interpretations      Interpretation[]  @relation("InterpretationSchool")
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
 
   @@index([editorialStatus])
 }
 
 model Technique {
-  id                String          @id
+  id                String            @id
   name              String
-  slug              String          @unique
-  aliases           String[]        @default([])
+  slug              String            @unique
+  aliases           String[]          @default([])
   category          String
   summary           String
-  categories        String[]        @default([])
+  categories        String[]          @default([])
   period            String?
   definition        String?
   historicalContext String?
   development       Json?
   keyIdeas          Json?
   toolPath          String?
-  editorialStatus   EditorialStatus @default(DRAFT)
+  editorialStatus   EditorialStatus   @default(DRAFT)
+  dataCategory      DataCategory      @default(PRODUCTION_CONTENT)
+  publicationStatus PublicationStatus @default(PUBLISHED)
   lastReviewedAt    DateTime?
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
 
   @@index([category])
   @@index([editorialStatus])
@@ -133,6 +143,7 @@ model Dynasty {
   endYear         Int?
   summary         String?
   editorialStatus EditorialStatus @default(BASIC)
+  dataCategory    DataCategory    @default(PRODUCTION_CONTENT)
   concepts        Concept[]
   classics        Classic[]
   createdAt       DateTime        @default(now())
@@ -150,6 +161,7 @@ model Source {
   isbn          String?
   url           String?
   note          String?
+  dataCategory  DataCategory  @default(PRODUCTION_CONTENT)
   citations     Citation[]
   witnesses     TextWitness[]
   createdAt     DateTime      @default(now())
@@ -168,6 +180,7 @@ model Citation {
   note             String?
   citationType     CitationType
   evidenceStatus   EvidenceStatus      @default(DOCUMENTED)
+  dataCategory     DataCategory        @default(PRODUCTION_CONTENT)
   relationId       String?
   interpretationId String?
   passageId        String?
@@ -176,6 +189,7 @@ model Citation {
   interpretation   Interpretation?     @relation(fields: [interpretationId], references: [id], onDelete: Cascade)
   passage          TextPassage?        @relation(fields: [passageId], references: [id], onDelete: SetNull)
   createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
 
   @@unique([sourceId, subjectType, subjectId, locator, citationType])
   @@index([subjectType, subjectId])
@@ -198,6 +212,7 @@ model TextWitness {
   description     String?
   isPrimary       Boolean         @default(false)
   editorialStatus EditorialStatus @default(DRAFT)
+  dataCategory    DataCategory    @default(PRODUCTION_CONTENT)
   classic         Classic         @relation(fields: [classicId], references: [id], onDelete: Cascade)
   source          Source?         @relation(fields: [sourceId], references: [id], onDelete: SetNull)
   sections        TextSection[]
@@ -210,20 +225,21 @@ model TextWitness {
 }
 
 model TextSection {
-  id          String        @id
-  witnessId   String
-  parentId    String?
-  slug        String
-  title       String
-  ordinal     Int
-  sectionType String
-  depth       Int           @default(0)
-  witness     TextWitness   @relation(fields: [witnessId], references: [id], onDelete: Cascade)
-  parent      TextSection?  @relation("SectionTree", fields: [parentId], references: [id], onDelete: Cascade)
-  children    TextSection[] @relation("SectionTree")
-  passages    TextPassage[]
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id           String        @id
+  witnessId    String
+  parentId     String?
+  slug         String
+  title        String
+  ordinal      Int
+  sectionType  String
+  depth        Int           @default(0)
+  dataCategory DataCategory  @default(PRODUCTION_CONTENT)
+  witness      TextWitness   @relation(fields: [witnessId], references: [id], onDelete: Cascade)
+  parent       TextSection?  @relation("SectionTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children     TextSection[] @relation("SectionTree")
+  passages     TextPassage[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 
   @@unique([witnessId, slug])
   @@index([witnessId, parentId, ordinal])
@@ -237,6 +253,7 @@ model TextPassage {
   normalizedText  String?
   contentType     PassageContentType  @default(SOURCE_TEXT)
   editorialStatus EditorialStatus     @default(DRAFT)
+  dataCategory    DataCategory        @default(PRODUCTION_CONTENT)
   section         TextSection         @relation(fields: [sectionId], references: [id], onDelete: Cascade)
   citations       Citation[]
   entityLinks     PassageEntityLink[]
@@ -255,8 +272,10 @@ model PassageEntityLink {
   linkType       PassageLinkType
   note           String?
   evidenceStatus EvidenceStatus      @default(INFERRED)
+  dataCategory   DataCategory        @default(PRODUCTION_CONTENT)
   passage        TextPassage         @relation(fields: [passageId], references: [id], onDelete: Cascade)
   createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
 
   @@unique([passageId, entityType, entityId, linkType])
   @@index([entityType, entityId])
@@ -274,6 +293,7 @@ model Interpretation {
   period               String?
   evidenceStatus       EvidenceStatus      @default(INFERRED)
   editorialStatus      EditorialStatus     @default(DRAFT)
+  dataCategory         DataCategory        @default(PRODUCTION_CONTENT)
   attributedToPerson   Person?             @relation("InterpretationPerson", fields: [attributedToPersonId], references: [id], onDelete: SetNull)
   attributedToSchool   School?             @relation("InterpretationSchool", fields: [attributedToSchoolId], references: [id], onDelete: SetNull)
   citations            Citation[]
@@ -294,6 +314,7 @@ model Relation {
   targetId       String
   relationType   RelationType
   evidenceStatus EvidenceStatus  @default(INFERRED)
+  dataCategory   DataCategory    @default(PRODUCTION_CONTENT)
   note           String?
   sourceNote     String?
   legacySources  String[]        @default([])
@@ -308,6 +329,126 @@ model Relation {
   @@index([targetType, targetId])
   @@index([relationType])
   @@index([evidenceStatus])
+}
+
+model EditorialAuditLog {
+  id             String               @id @default(cuid())
+  entityType     EditorialObjectType
+  entityId       String
+  action         EditorialAuditAction
+  actor          String?              @default("LOCAL_EDITOR")
+  changeSummary  Json
+  beforeSnapshot Json?
+  afterSnapshot  Json?
+  createdAt      DateTime             @default(now())
+
+  @@index([entityType, entityId, createdAt])
+  @@index([action, createdAt])
+}
+
+model AiEditorialProposal {
+  id                  String                   @id @default(cuid())
+  type                AiEditorialProposalType
+  targetType          KnowledgeEntityType
+  targetId            String
+  payload             Json
+  evidenceDocumentIds String[]                 @default([])
+  provider            String
+  model               String
+  status              AiEditorialProposalStatus @default(PENDING)
+  reviewedAt          DateTime?
+  createdAt           DateTime                 @default(now())
+  updatedAt           DateTime                 @updatedAt
+
+  @@index([status, createdAt])
+  @@index([targetType, targetId])
+}
+
+model RagDocument {
+  id                String            @id
+  type              RagDocumentType
+  entityType        String
+  entityId          String
+  section           String
+  text              String
+  sourceType        String
+  citationIds       String[]          @default([])
+  passageId         String?
+  classicId         String?
+  editorialStatus   EditorialStatus
+  publicationStatus PublicationStatus
+  evidenceStatus    EvidenceStatus?
+  contentHash       String
+  indexVersion      String
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  embeddings        RagEmbedding[]
+
+  @@index([entityType, entityId])
+  @@index([type])
+  @@index([contentHash])
+}
+
+model RagEmbedding {
+  id          String                @id @default(cuid())
+  documentId  String
+  provider    String
+  model       String
+  dimensions  Int
+  contentHash String
+  embedding   Unsupported("vector")
+  indexedAt   DateTime              @default(now())
+  document    RagDocument           @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, provider, model])
+  @@index([provider, model])
+  @@index([contentHash])
+}
+
+model IndexManifest {
+  id                      String     @id @default(cuid())
+  indexVersion            String
+  provider                String
+  model                   String
+  dimensions              Int
+  documentCount           Int
+  embeddingCount          Int
+  contentSnapshotChecksum String
+  state                   IndexState @default(CURRENT)
+  lastIndexedAt           DateTime   @default(now())
+  createdAt               DateTime   @default(now())
+  updatedAt               DateTime   @updatedAt
+
+  @@unique([indexVersion, provider, model])
+  @@index([lastIndexedAt])
+  @@index([contentSnapshotChecksum])
+}
+
+enum RagDocumentType {
+  KNOWLEDGE_ENTRY
+  PASSAGE
+  INTERPRETATION
+  CLASSIC_SUMMARY
+  PERSON_SUMMARY
+  SCHOOL_SUMMARY
+  TECHNIQUE_SUMMARY
+}
+
+enum AiEditorialProposalType {
+  CANDIDATE_SUMMARY
+}
+
+enum AiEditorialProposalStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum IndexState {
+  BUILDING
+  CURRENT
+  STALE
+  FAILED
 }
 
 enum KnowledgeEntityType {
@@ -351,6 +492,47 @@ enum EditorialStatus {
   BASIC
   SOURCED
   REVIEWED
+}
+
+enum DataCategory {
+  PRODUCTION_CONTENT
+  DEVELOPMENT_FIXTURE
+  REGRESSION_FIXTURE
+  LAYOUT_FIXTURE
+  SAMPLE_CONTENT
+}
+
+enum PublicationStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum EditorialObjectType {
+  CONCEPT
+  CLASSIC
+  PERSON
+  SCHOOL
+  TECHNIQUE
+  DYNASTY
+  RELATION
+  SOURCE
+  CITATION
+  INTERPRETATION
+  TEXT_WITNESS
+  TEXT_SECTION
+  TEXT_PASSAGE
+  PASSAGE_ENTITY_LINK
+  RULE_PROVENANCE
+}
+
+enum EditorialAuditAction {
+  CREATE
+  UPDATE
+  STATUS_CHANGE
+  REVIEW
+  ARCHIVE
+  DELETE
 }
 
 enum SourceType {

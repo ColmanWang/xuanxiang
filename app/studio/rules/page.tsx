@@ -1,0 +1,7 @@
+import Link from "next/link";
+import { StudioPageHeader } from "@/components/studio/studio-ui";
+import { STANDARD_ZIPING } from "@/lib/bazi/rules";
+import { LIUYAO_RULE_REFERENCES } from "@/lib/liuyao/rule-references";
+export default function StudioRulesPage(){return <div className="space-y-8"><StudioPageHeader title="推演规则典据" description="这里编辑和核对资料说明，不修改 Engine Policy ID、版本或算法参数。算法变化仍必须经过代码、测试和版本纪律。"/><RuleGroup title="四柱" href="/tools/bazi/rules" items={STANDARD_ZIPING.references as unknown as RuleItem[]}/><RuleGroup title="六爻" href="/tools/liuyao/rules" items={LIUYAO_RULE_REFERENCES as unknown as RuleItem[]}/></div>}
+type RuleItem={policyId:string;evidenceStatus:string;citationIds?:readonly string[];formalization?:string;editorialInterpretation?:string};
+function RuleGroup({title,href,items}:{title:string;href:string;items:RuleItem[]}){return <section><div className="mb-4 flex items-center justify-between"><h3 className="font-serif text-2xl">{title}</h3><Link href={href} className="text-sm text-primary">查看公开规则档案</Link></div><div className="divide-y border bg-card">{items.map(item=><article id={item.policyId} key={item.policyId} className="grid gap-3 p-4 lg:grid-cols-[16rem_9rem_1fr]"><code className="break-all text-xs">{item.policyId}</code><p className="text-xs text-muted-foreground">{item.evidenceStatus}<br/>{item.citationIds?.length??0} Citations</p><p className="text-sm leading-6 text-muted-foreground">{item.formalization??item.editorialInterpretation??"形式化说明待整理"}</p></article>)}</div></section>}

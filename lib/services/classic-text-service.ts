@@ -18,8 +18,8 @@ async function resolveEntity(link:{id:string;entityType:string;entityId:string;l
 
 export async function getPassageContext(id:string):Promise<PassageContext|null>{
   const item=await classicRepository.getPassage(id); if(!item)return null;
-  const {getRulesForPassage}=await import("@/lib/bazi/provenance");
-  const [order,entityLinks,rules]=await Promise.all([classicRepository.getWitnessPassageOrder(item.section.witnessId),Promise.all(item.entityLinks.map(resolveEntity)),getRulesForPassage(id)]); const index=order.findIndex(row=>row.id===id);
+  const [{getRulesForPassage},{getLiuyaoRulesForPassage}]=await Promise.all([import("@/lib/bazi/provenance"),import("@/lib/liuyao/provenance")]);
+  const [order,entityLinks,baziRules,liuyaoRules]=await Promise.all([classicRepository.getWitnessPassageOrder(item.section.witnessId),Promise.all(item.entityLinks.map(resolveEntity)),getRulesForPassage(id),getLiuyaoRulesForPassage(id)]); const index=order.findIndex(row=>row.id===id); const rules=[...baziRules,...liuyaoRules];
   return {passage:{id:item.id,ordinal:item.ordinal,text:item.text,normalizedText:item.normalizedText??undefined,contentType:item.contentType,editorialStatus:item.editorialStatus,linkCount:item.entityLinks.length},previous:index>0?order[index-1]:undefined,next:index>=0&&index<order.length-1?order[index+1]:undefined,section:{id:item.section.id,slug:item.section.slug,title:item.section.title},witness:{id:item.section.witness.id,title:item.section.witness.title,shortTitle:item.section.witness.shortTitle??undefined,editionType:item.section.witness.editionType,description:item.section.witness.description??undefined,isPrimary:item.section.witness.isPrimary,editorialStatus:item.section.witness.editorialStatus,sourceTitle:item.section.witness.source?.title},classic:{id:item.section.witness.classic.id,slug:item.section.witness.classic.slug,title:item.section.witness.classic.title},entityLinks,citations:item.citations.map(c=>({id:c.id,sourceTitle:c.source.title,locator:c.locator??undefined,note:c.note??undefined,evidenceStatus:c.evidenceStatus,subjectType:c.subjectType,subjectId:c.subjectId})),rules};
 }
 

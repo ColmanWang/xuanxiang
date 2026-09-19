@@ -1,4 +1,4 @@
-import type { EditorialStatus, EditionType, EvidenceStatus, KnowledgeEntityType, PassageContentType, PassageLinkType } from "@prisma/client";
+import type { DataCategory, EditorialStatus, EditionType, EvidenceStatus, KnowledgeEntityType, PassageContentType, PassageLinkType } from "@prisma/client";
 
 export interface PassageLinkImport {
   id: string;
@@ -32,6 +32,7 @@ export interface SectionImport {
 
 export interface ClassicTextImportPayload {
   classicSlug: string;
+  dataCategory?: DataCategory;
   witness: {
     id: string;
     title: string;

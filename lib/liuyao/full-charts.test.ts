@@ -24,19 +24,19 @@ describe("Liuyao full-chart regression fixtures", () => {
   });
 
   it("covers no movement, bottom movement, top movement, multiple movement and all movement", () => {
-    expect(LIUYAO_FULL_CHART_FIXTURES.map((fixture) => fixture.expected.movingLineIndices)).toEqual([
-      [2, 4],
-      [],
-      [0],
-      [5],
-      [0, 1, 2, 3, 4, 5],
-    ]);
+    const patterns = LIUYAO_FULL_CHART_FIXTURES.map((fixture) => fixture.expected.movingLineIndices);
+    expect(patterns).toContainEqual([]);
+    expect(patterns).toContainEqual([0]);
+    expect(patterns).toContainEqual([5]);
+    expect(patterns).toContainEqual([0, 1, 2, 3, 4, 5]);
+    expect(patterns.some((indices) => indices.length > 1 && indices.length < 6)).toBe(true);
   });
 
   it("covers multiple timezones and explicit DST disambiguation", () => {
-    expect(new Set(LIUYAO_FULL_CHART_FIXTURES.map((fixture) => fixture.input.divinationTime.timezone))).toEqual(
-      new Set(["Asia/Shanghai", "UTC", "America/New_York", "Europe/London"]),
-    );
+    const timezones = new Set(LIUYAO_FULL_CHART_FIXTURES.map((fixture) => fixture.input.divinationTime.timezone));
+    for (const timezone of ["Asia/Shanghai", "UTC", "America/New_York", "Europe/London", "Asia/Tokyo", "Asia/Hong_Kong", "America/Los_Angeles", "Australia/Sydney"]) {
+      expect(timezones.has(timezone)).toBe(true);
+    }
     expect(LIUYAO_FULL_CHART_FIXTURES.find((fixture) => fixture.id === "kun-top-moving-new-york")?.input.divinationTime.timeDisambiguation).toBe(
       "LATER",
     );
@@ -48,6 +48,20 @@ describe("Liuyao full-chart regression fixtures", () => {
       expect(fixture.verification.locator).not.toBe("");
       expect(fixture.verification.retrievedAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);
       expect(["A", "B", "C"]).toContain(fixture.verification.tier);
+      expect(fixture.verification.ruleSet).toBe("STANDARD_WENWANG_GUA@1.0.0");
+      expect(fixture.verification.verificationMethod).not.toBe("");
+      expect(["EXTERNAL", "CROSS_CHECK", "SYNTHETIC"]).toContain(fixture.verification.sourceType);
+    }
+  });
+
+  it("contains at least twenty provenance-bearing full-chart fixtures", () => {
+    expect(LIUYAO_FULL_CHART_FIXTURES.length).toBeGreaterThanOrEqual(20);
+    expect(LIUYAO_FULL_CHART_FIXTURES.filter((fixture) => fixture.tier === "A")).toHaveLength(0);
+    expect(LIUYAO_FULL_CHART_FIXTURES.filter((fixture) => fixture.tier === "B")).toHaveLength(5);
+    expect(LIUYAO_FULL_CHART_FIXTURES.filter((fixture) => fixture.tier === "C")).toHaveLength(15);
+    for (const fixture of LIUYAO_FULL_CHART_FIXTURES) {
+      if (fixture.tier === "A") expect(fixture.verification.sourceType).toBe("EXTERNAL");
+      if (fixture.verification.sourceType === "SYNTHETIC") expect(fixture.tier).toBe("C");
     }
   });
 });

@@ -3,3 +3,16 @@ export const PALACE_GOLDEN={
 } as const;
 export const PALACE_POSITION_GOLDEN=["PURE","FIRST","SECOND","THIRD","FOURTH","FIFTH","WANDERING_SOUL","RETURNING_SOUL"] as const;
 export const SHI_GOLDEN=[5,0,1,2,3,4,3,2] as const;
+
+export const PALACE_DATASET_PROVENANCE = Object.freeze({
+  source: "《事林广记·续集卷十一·卜史类》公共领域数字转录",
+  locator: "推八卦所生数游魂归魂诀；推卦内世应所在之法",
+  retrievedAt: "2026-08-29",
+  evidenceLevel: "CROSS_CHECKED" as const,
+  verificationNote: "测试静态表按实际打开的公开全文逐宫核对，不导入生产 masks、宫序或世应 helper；数字转录仍待影像校订。",
+});
+
+export const SOUL_POSITION_GOLDEN = Object.freeze({
+  WANDERING_SOUL: ["晋", "小过", "讼", "大过", "颐", "明夷", "中孚", "需"],
+  RETURNING_SOUL: ["大有", "归妹", "同人", "随", "蛊", "师", "渐", "比"],
+} as const);

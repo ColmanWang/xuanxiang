@@ -6,6 +6,7 @@ import { AlertCircle, BookOpen, CheckCircle2, Coins, Loader2 } from "lucide-reac
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { AiSheet } from "@/components/ai/ai-sheet";
 import {
   FIVE_ELEMENT_LABEL as elementLabels,
   LIUYAO_TRACE_KIND_LABEL as traceKindLabels,
@@ -16,6 +17,7 @@ import {
 } from "@/lib/liuyao/labels";
 import type {
   LiuyaoChart,
+  LiuyaoInput,
   LiuyaoLine,
   LiuyaoLineValue,
   YinYang,
@@ -89,6 +91,7 @@ function LineVisual({ line, changed }: { line: LiuyaoLine; changed?: YinYang }) 
 
 export function LiuyaoWorkbench() {
   const [chart, setChart] = useState<LiuyaoChart | null>(null);
+  const [lastInput, setLastInput] = useState<LiuyaoInput | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [tab, setTab] = useState<ResultTab>("卦盘");
@@ -106,7 +109,7 @@ export function LiuyaoWorkbench() {
     }
     setPending(true);
     setError(null);
-    const input = {
+    const input: LiuyaoInput = {
       method: inputMode === "coins" ? "THREE_COINS" : "MANUAL_LINE_VALUES",
       lineOrder: "BOTTOM_TO_TOP",
       lines: effectiveLines,
@@ -128,6 +131,7 @@ export function LiuyaoWorkbench() {
         throw new Error(payload.error?.issues?.[0]?.message ?? payload.error?.message ?? "六爻推演失败，请检查输入。");
       }
       setChart(payload.chart);
+      setLastInput(input);
       setTab("卦盘");
     } catch (caught) {
       setChart(null);
@@ -254,7 +258,7 @@ export function LiuyaoWorkbench() {
                 <p className="text-xs text-muted-foreground">确定性输出 · ENGINE {chart.engineVersion}</p>
                 <h2 className="mt-3 font-serif text-3xl">六爻卦盘</h2>
               </div>
-              <Badge>{chart.ruleSet.displayName} · v{chart.ruleSet.version}</Badge>
+              <div className="flex flex-wrap items-center gap-3"><Badge>{chart.ruleSet.displayName} · v{chart.ruleSet.version}</Badge><Link href="/tools/liuyao/rules" className="text-sm text-primary">查看规则</Link>{lastInput?<AiSheet mode="LIUYAO_EXPLANATION" label="解释排盘结构" context={{calculation:{engineVersion:chart.engineVersion,ruleSetId:chart.ruleSet.id,ruleSetVersion:chart.ruleSet.version,fingerprint:chart.fingerprint,input:lastInput}}} />:null}</div>
             </div>
             <div className="mt-5 grid gap-4 md:grid-cols-3">
               <article className="border bg-card p-4">

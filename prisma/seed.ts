@@ -6,6 +6,7 @@ import { validateRelations } from "../lib/services/relation-validation-service";
 import { importClassicText } from "../lib/importers/classic-text/importer";
 import { laoziSample, shangshuSample, zhouyiSample, zhuangziSample } from "./seed-data/classics";
 import { sanmingTonghuiRuleSample } from "./seed-data/classics/sanming-tonghui";
+import { shilinGuangjiLiuyaoSample, xiangshiJiashuoLiuyaoSample, zengshanBuyiLiuyaoSample } from "./seed-data/classics/liuyao-rules";
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) throw new Error("DATABASE_URL is required");
@@ -49,6 +50,9 @@ async function seedEntities() {
     if (item.entityType === "dynasty") await prisma.dynasty.upsert({ where: { id: item.entityId }, update: { name: item.title, slug: item.slug, summary: item.summary }, create: { id: item.entityId, name: item.title, slug: item.slug, summary: item.summary, editorialStatus: "BASIC" } });
   }
   await prisma.classic.upsert({ where: { id: "shangshu" }, update: { title:"尚书",slug:"shangshu",aliases:["书经"],summary:"汇集上古政治文献与历史叙事的重要经典，篇章形成与传承问题复杂。",categories:["经学"],period:"先秦至汉代传承",editorialStatus:"BASIC",lastReviewedAt:reviewedAt }, create: { id:"shangshu",title:"尚书",slug:"shangshu",aliases:["书经"],summary:"汇集上古政治文献与历史叙事的重要经典，篇章形成与传承问题复杂。",categories:["经学"],period:"先秦至汉代传承",attributionStatus:"COMPOSITE",editorialStatus:"BASIC",lastReviewedAt:reviewedAt } });
+  await prisma.classic.upsert({ where: { id: "shilin-guangji" }, update: { title:"事林广记",slug:"shilin-guangji",aliases:["新编纂图增类群书类要事林广记"],summary:"宋元间形成并经后世刊刻流传的日用类书；当前仅收录续集卷十一中与卜筮规则有关的极少量数字转录。",categories:["类书","术数文献"],period:"宋元及后世刊本",editorialStatus:"BASIC",lastReviewedAt:reviewedAt }, create: { id:"shilin-guangji",title:"事林广记",slug:"shilin-guangji",aliases:["新编纂图增类群书类要事林广记"],summary:"宋元间形成并经后世刊刻流传的日用类书；当前仅收录续集卷十一中与卜筮规则有关的极少量数字转录。",categories:["类书","术数文献"],period:"宋元及后世刊本",authorDisplay:"陈元靓编纂",attributionStatus:"TRADITIONAL",editorialStatus:"BASIC",lastReviewedAt:reviewedAt } });
+  await prisma.classic.upsert({ where: { id: "xiangshi-jiashuo" }, update: { title:"项氏家说",slug:"xiangshi-jiashuo",aliases:[],summary:"项安世论经著作；卷二保存对京氏易纳甲、世应及飞伏规则的后世说明。",categories:["经学","易学文献"],period:"南宋",editorialStatus:"BASIC",lastReviewedAt:reviewedAt }, create: { id:"xiangshi-jiashuo",title:"项氏家说",slug:"xiangshi-jiashuo",aliases:[],summary:"项安世论经著作；卷二保存对京氏易纳甲、世应及飞伏规则的后世说明。",categories:["经学","易学文献"],period:"南宋",authorDisplay:"项安世",attributionStatus:"CERTAIN",editorialStatus:"BASIC",lastReviewedAt:reviewedAt } });
+  await prisma.classic.upsert({ where: { id: "zengshan-buyi" }, update: { title:"增删卜易",slug:"zengshan-buyi",aliases:[],summary:"清代六爻占法文献；当前仅收录与月建、日辰、六神规则语境有关的极少量数字转录。",categories:["术数文献"],period:"清",editorialStatus:"BASIC",lastReviewedAt:reviewedAt }, create: { id:"zengshan-buyi",title:"增删卜易",slug:"zengshan-buyi",aliases:[],summary:"清代六爻占法文献；当前仅收录与月建、日辰、六神规则语境有关的极少量数字转录。",categories:["术数文献"],period:"清",authorDisplay:"野鹤老人",attributionStatus:"TRADITIONAL",editorialStatus:"BASIC",lastReviewedAt:reviewedAt } });
 }
 
 const sources = [
@@ -65,6 +69,9 @@ const sources = [
   { id: "source-sanming-gujin-472", type: "PRIMARY_TEXT" as const, title: "《古今图书集成·博物汇编·艺术典》卷六百二十四所收《三命通会·消息赋下》", author: "《三命通会》万民英撰；《古今图书集成》陈梦雷等编", dynastyOrYear: "清康熙间编纂本数字影像", edition: "Internet Archive 扫描件经 Wikimedia Commons / 维基文库承载，Volume 472，影像页 66、69", publisher: "维基文库数字承载", url: "https://zh.wikisource.org/wiki/Index:Gujin_Tushu_Jicheng,_Volume_472_(1700-1725).djvu", note: "影像已人工打开核对；维基文库转录页标为尚未校对，玄象仅录入与规则直接相关的短句。" },
   { id: "source-zangshu", type: "PRIMARY_TEXT" as const, title: "《葬书》", dynastyOrYear: "传统归属有待版本考辨" },
   { id: "source-shangshu", type: "PRIMARY_TEXT" as const, title: "《尚书》", dynastyOrYear: "先秦至汉代传承", note: "篇章与文本系统复杂；当前仅作开发样例来源。" },
+  { id: "source-shilin-guangji-xuji-11", type: "PRIMARY_TEXT" as const, title: "《事林广记·续集卷十一·卜史类》", author: "陈元靓编纂", dynastyOrYear: "南宋成书传统；后世刊本流传", edition: "维基文库公共领域数字转录", publisher: "维基文库数字承载", url: "https://zh.wikisource.org/zh/事林廣記/續集/卷11", note: "已实际打开核对全文页面；仅作后世规则定式的可定位转录，尚待版本影像逐字校订。" },
+  { id: "source-xiangshi-jiashuo-juan-2", type: "PRIMARY_TEXT" as const, title: "《项氏家说（四库全书本）·卷二·说经篇二》", author: "项安世", dynastyOrYear: "南宋", edition: "四库全书本维基文库公共领域数字转录", publisher: "维基文库数字承载", url: "https://zh.wikisource.org/wiki/項氏家説_(四庫全書本)/卷02", note: "已实际打开核对纳甲、世应与飞伏段落；数字转录仍待影像校订。" },
+  { id: "source-zengshan-buyi-wikisource", type: "PRIMARY_TEXT" as const, title: "《增删卜易》维基文库公共领域数字转录", author: "野鹤老人", dynastyOrYear: "清", edition: "维基文库公共领域数字转录", publisher: "维基文库数字承载", url: "https://zh.wikisource.org/zh-hans/增删卜易", note: "已实际打开核对月建、日辰与六神相关章节；仅用于规则语境，不导入断卦内容。" },
 ] as const;
 
 async function seedSources() {
@@ -79,13 +86,22 @@ async function seedSources() {
 }
 
 async function seedClassicTexts() {
-  for (const payload of [zhouyiSample, laoziSample, zhuangziSample, shangshuSample, sanmingTonghuiRuleSample]) await importClassicText(payload, prisma);
+  for (const payload of [zhouyiSample, laoziSample, zhuangziSample, shangshuSample, sanmingTonghuiRuleSample, shilinGuangjiLiuyaoSample, xiangshiJiashuoLiuyaoSample, zengshanBuyiLiuyaoSample]) await importClassicText({ ...payload, dataCategory: "SAMPLE_CONTENT" }, prisma);
   const passageCitations = [
     { id:"citation-wuxing", passageId:"passage-shangshu-wuxing", locator:"洪范", sourceId:"source-shangshu", subjectType:"CONCEPT" as const, subjectId:"wuxing", citationType:"DEFINITION" as const, evidenceStatus:"DOCUMENTED" as const, note:"支持五行名称及基本次序；示例分段与标点待人工校订。" },
     { id:"citation-yinyang-passage",passageId:"passage-zhouyi-yinyang",locator:"系辞上传",sourceId:"source-zhouyi",subjectType:"CONCEPT" as const,subjectId:"yinyang",citationType:"DEFINITION" as const,evidenceStatus:"DOCUMENTED" as const,note:"用于阴阳概念的原典定位；示例文本待版本校订。" },
     { id:"citation-bagua-passage",passageId:"passage-zhouyi-taiji",locator:"系辞上传",sourceId:"source-zhouyi",subjectType:"CONCEPT" as const,subjectId:"bagua",citationType:"HISTORICAL_CONTEXT" as const,evidenceStatus:"DOCUMENTED" as const,note:"用于八卦相关条目的原典定位。" },
     { id:"citation-rule-luck-direction",passageId:"passage-sanming-direction-2",locator:"《古今图书集成》艺术典卷六百二十四，星命部汇考六十，《三命通会》三十二〈消息赋下〉，影像页69，“男迎女送”释文",sourceId:"source-sanming-gujin-472",subjectType:"TECHNIQUE" as const,subjectId:"sizhu-mingli",citationType:"RELATION_EVIDENCE" as const,evidenceStatus:"TRADITIONAL" as const,note:"支持阳男阴女顺行的后世表述；结合相邻文句说明阴阳男女依逆顺行运。不能据此宣称为该规则最早来源。" },
     { id:"citation-rule-luck-start",passageId:"passage-sanming-luck-start",locator:"《古今图书集成》艺术典卷六百二十四，星命部汇考六十，《三命通会》三十二〈消息赋下〉，影像页69，“依逆顺行运折除”释文",sourceId:"source-sanming-gujin-472",subjectType:"TECHNIQUE" as const,subjectId:"sizhu-mingli",citationType:"RELATION_EVIDENCE" as const,evidenceStatus:"TRADITIONAL" as const,note:"支持按节气日数定岁数及折年关系；不支持玄象对余小时、余分钟与截断顺序的全部工程细节。" },
+    { id:"citation-liuyao-palaces",passageId:"passage-shilin-eight-palaces",locator:"续集卷十一·卜史类，推八卦所生数游魂归魂诀",sourceId:"source-shilin-guangji-xuji-11",subjectType:"TECHNIQUE" as const,subjectId:"liuyao",citationType:"RELATION_EVIDENCE" as const,evidenceStatus:"TRADITIONAL" as const,note:"文献明确列出八宫各宫一至五世、游魂、归魂卦序；支持后世定式，不等于《周易》经文直接规定。" },
+    { id:"citation-liuyao-shi-ying",passageId:"passage-xiangshi-shi-ying",locator:"卷二·说经篇二，世应例",sourceId:"source-xiangshi-jiashuo-juan-2",subjectType:"TECHNIQUE" as const,subjectId:"liuyao",citationType:"RELATION_EVIDENCE" as const,evidenceStatus:"TRADITIONAL" as const,note:"文献明确说明本宫、归魂及其余宫位的世爻与应爻原则；玄象另行形式化为0-based爻位。" },
+    { id:"citation-liuyao-najia",passageId:"passage-xiangshi-najia",locator:"卷二·说经篇二，纳甲法",sourceId:"source-xiangshi-jiashuo-juan-2",subjectType:"TECHNIQUE" as const,subjectId:"liuyao",citationType:"RELATION_EVIDENCE" as const,evidenceStatus:"TRADITIONAL" as const,note:"文献逐爻列出八纯卦纳干支；支持后世纳甲定式，不证明该规则由《周易》经文直接提出。" },
+    { id:"citation-liuyao-six-relatives",passageId:"passage-shilin-six-relatives",locator:"续集卷十一·卜史类，配卦内六亲法",sourceId:"source-shilin-guangji-xuji-11",subjectType:"TECHNIQUE" as const,subjectId:"liuyao",citationType:"RELATION_EVIDENCE" as const,evidenceStatus:"TRADITIONAL" as const,note:"支持五行生克与六亲术语映射；现实人物关系与吉凶判断不在本阶段。" },
+    { id:"citation-liuyao-six-spirits",passageId:"passage-zengshan-six-spirits-table",locator:"卷首·起六神诀",sourceId:"source-zengshan-buyi-wikisource",subjectType:"TECHNIQUE" as const,subjectId:"liuyao",citationType:"RELATION_EVIDENCE" as const,evidenceStatus:"TRADITIONAL" as const,note:"支持当前规则采用的甲乙、丙丁、戊、己、庚辛、壬癸起六神次序；不支持任何吉凶解释。" },
+    { id:"citation-liuyao-six-spirits-shilin-variant",passageId:"passage-shilin-six-spirits",locator:"续集卷十一·卜史类，定十干日六神入卦法",sourceId:"source-shilin-guangji-xuji-11",subjectType:"TECHNIQUE" as const,subjectId:"liuyao",citationType:"RELATION_EVIDENCE" as const,evidenceStatus:"CONTESTED" as const,note:"《事林广记》续集卷十一所见戊己起例与当前规则采用的《增删卜易》起例不同；作为来源差异保留，不作为当前算法直接依据。" },
+    { id:"citation-liuyao-hidden-context",passageId:"passage-xiangshi-flying-hidden",locator:"卷二·说经篇二，飞伏例",sourceId:"source-xiangshi-jiashuo-juan-2",subjectType:"TECHNIQUE" as const,subjectId:"liuyao",citationType:"HISTORICAL_CONTEXT" as const,evidenceStatus:"TRADITIONAL" as const,note:"提供飞伏规则历史线索；因适用范围和独立fixtures不足，玄象仍不实现伏神。" },
+    { id:"citation-liuyao-month-jian-zengshan",passageId:"passage-zengshan-month-jian-branches",locator:"四时旺相章，十二月建地支配属",sourceId:"source-zengshan-buyi-wikisource",subjectType:"TECHNIQUE" as const,subjectId:"liuyao",citationType:"RELATION_EVIDENCE" as const,evidenceStatus:"TRADITIONAL" as const,note:"支持月建与十二地支配属；玄象以十二节气瞬间作为切换边界属于工程形式化，非该短段逐秒说明。" },
+    { id:"citation-liuyao-day-context-zengshan",passageId:"passage-zengshan-day-context",locator:"日辰章",sourceId:"source-zengshan-buyi-wikisource",subjectType:"TECHNIQUE" as const,subjectId:"liuyao",citationType:"RELATION_EVIDENCE" as const,evidenceStatus:"TRADITIONAL" as const,note:"支持日辰作为六爻历法上下文的重要角色；具体日干支由玄象 Calendar Core 确定。" },
   ];
   for (const citation of passageCitations) await prisma.citation.upsert({ where:{id:citation.id},update:citation,create:citation });
 }

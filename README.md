@@ -54,8 +54,16 @@ pnpm calendar:verify-terms
 pnpm bazi:rules --provenance
 pnpm bazi:verify-foundation
 pnpm liuyao:calculate --lines 7,8,9,7,6,8 --datetime 2026-08-19T14:30 --timezone Asia/Shanghai --trace
+pnpm liuyao:rules --provenance
 pnpm liuyao:verify-foundation
+pnpm content:validate
+pnpm content:export --out /tmp/xuanxiang-content.json
+pnpm content:import --file /tmp/xuanxiang-content.json --dry-run
 ```
+
+## 编辑台
+
+开发环境在 `.env` 显式设置 `ENABLE_EDITORIAL_STUDIO=true`，然后访问 `/studio`。生产环境始终返回 404，不开放无鉴权写入入口。日常精修通过 Studio，可审核的大批量文本继续使用 importer，seed 仅用于重建最小开发基线。详见 `docs/editorial/`。
 
 ## 原典样例与导入
 

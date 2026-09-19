@@ -8,7 +8,8 @@ function createPrismaClient() {
   if (!connectionString) {
     throw new Error("DATABASE_URL is required. Copy .env.example to .env or start the Docker development database.");
   }
-  return new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
+  const configuredSchema = new URL(connectionString).searchParams.get("schema") ?? undefined;
+  return new PrismaClient({ adapter: new PrismaPg({ connectionString }, { schema: configuredSchema }) });
 }
 
 export const prisma = globalForPrisma.prisma ?? createPrismaClient();
