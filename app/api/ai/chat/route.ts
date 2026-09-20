@@ -4,18 +4,9 @@ import { AiError } from "@/lib/ai/types";
 import { DeterministicBaziEngine } from "@/lib/bazi/engine";
 import { DeterministicLiuyaoEngine } from "@/lib/liuyao/engine";
 import { createAiChatHandler, type AiRateLimiter } from "./handler";
-
-class LocalFixedWindowRateLimiter implements AiRateLimiter {
-  private readonly windows = new Map<string, { count: number; resetAt: number }>();
-  async consume({ key }: { key: string; route: "/api/ai/chat" }) {
-    const now = Date.now();
-    const current = this.windows.get(key);
-    const window = !current || current.resetAt <= now ? { count: 0, resetAt: now + 60_000 } : current;
-    const next = { ...window, count: window.count + 1 };
-    this.windows.set(key, next);
-    return next.count <= 10 ? { allowed: true } : { allowed: false, retryAfterSeconds: Math.max(1, Math.ceil((next.resetAt - now) / 1_000)) };
-  }
-}
+import { publicAiEnabled } from "@/lib/config/features";
+import { createUpstashRateLimiter } from "@/lib/security/rate-limit";
+import { clientIdentity } from "@/lib/security/request";
 
 const coreService = getDefaultAiAnswerService();
 const answerService = {
@@ -38,11 +29,16 @@ const answerService = {
   },
 };
 
+const distributedLimiter = createUpstashRateLimiter("ai");
+const rateLimiter: AiRateLimiter = { consume: async ({ key }) => distributedLimiter.consume({ identity: key, route: "ai" }) };
 const handler = createAiChatHandler({
   answerService,
-  rateLimiter: new LocalFixedWindowRateLimiter(),
-  // Forwarded addresses are trusted only when deployment explicitly enables its proxy boundary.
-  resolveRateLimitKey: (request) => process.env.AI_TRUST_PROXY === "true" ? request.headers.get("x-real-ip") || "anonymous" : "anonymous",
+  rateLimiter,
+  resolveRateLimitKey: (request) => clientIdentity(request),
+  timeoutMs: Number(process.env.AI_CHAT_TIMEOUT_MS || 30_000),
 });
 
-export const POST = handler;
+export async function POST(request: Request) {
+  if (process.env.NODE_ENV === "production" && !publicAiEnabled()) return Response.json({ error: { code: "AI_DISABLED", message: "AI 功能暂未开放。" } }, { status: 503 });
+  return handler(request);
+}

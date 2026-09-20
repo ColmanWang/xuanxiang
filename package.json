@@ -1,6 +1,6 @@
 {
   "name": "xuanxiang-platform",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -29,24 +29,35 @@
     "ai:index": "node --env-file=.env --import tsx scripts/ai-index.ts",
     "ai:status": "node --env-file=.env --import tsx scripts/ai-status.ts",
     "ai:eval": "node --env-file=.env --import tsx scripts/ai-eval.ts",
-    "ai:smoke": "node --env-file=.env --import tsx scripts/ai-smoke.ts"
+    "ai:smoke": "node --env-file=.env --import tsx scripts/ai-smoke.ts",
+    "migration:check": "node --import tsx scripts/phase11/check-migration-integrity.ts",
+    "launch:readiness": "node --import tsx scripts/launch-readiness.ts",
+    "production:smoke": "node --import tsx scripts/production-smoke.ts",
+    "e2e": "playwright test"
   },
   "dependencies": {
+    "@better-auth/prisma-adapter": "1.7.5",
     "@js-temporal/polyfill": "0.5.1",
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
+    "@sentry/nextjs": "10.75.0",
+    "@upstash/ratelimit": "2.1.0",
+    "@upstash/redis": "1.38.4",
     "@xyflow/react": "^12.11.2",
+    "better-auth": "1.7.5",
+    "dotenv": "17.4.2",
     "lucide-react": "^1.29.0",
     "lunar-typescript": "1.8.6",
-    "next": "16.3.0",
+    "next": "16.3.3",
     "next-themes": "^0.4.6",
     "pg": "^8.22.0",
+    "pino": "10.3.1",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "zod": "4.1.12"
   },
   "devDependencies": {
-    "@playwright/test": "1.55.0",
+    "@playwright/test": "1.55.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/pg": "^8.21.0",

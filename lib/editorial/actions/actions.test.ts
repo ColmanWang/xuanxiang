@@ -5,8 +5,9 @@ import { citationInputSchema, conceptInputSchema, passageInputSchema, personInpu
 import { assertRevision, changedFields } from "./service";
 
 describe("editorial action boundaries", () => {
-  it("keeps production disabled even when the feature flag is set", () => {
-    expect(isEditorialStudioEnabled({ NODE_ENV: "production", ENABLE_EDITORIAL_STUDIO: "true" })).toBe(false);
+  it("uses the explicit feature gate in every environment", () => {
+    expect(isEditorialStudioEnabled({ NODE_ENV: "production", ENABLE_EDITORIAL_STUDIO: "true" })).toBe(true);
+    expect(isEditorialStudioEnabled({ NODE_ENV: "production", ENABLE_EDITORIAL_STUDIO: "false" })).toBe(false);
     expect(isEditorialStudioEnabled({ NODE_ENV: "development", ENABLE_EDITORIAL_STUDIO: "true" })).toBe(true);
   });
   it("validates structured concepts and safe slugs", () => {

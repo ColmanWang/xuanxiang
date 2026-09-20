@@ -1,0 +1,34 @@
+name: Deployment gate (no automatic deploy)
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Environment to assess
+        type: choice
+        options: [staging, production]
+        default: staging
+      artifact_sha:
+        description: Immutable commit SHA already built by CI
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify-artifact:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: "${{ inputs.artifact_sha }}" }
+      - run: test "$(git rev-parse HEAD)" = "${{ inputs.artifact_sha }}"
+      - run: echo "This workflow records gates only. The hosting-platform deployment command must be configured and reviewed separately."
+
+  production-approval:
+    if: inputs.target == 'production'
+    needs: verify-artifact
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - run: echo "Manual production environment approval recorded; no deployment was executed."
+      - run: echo "Before a real deploy, attach backup confirmation, staging smoke, migration status, restore drill, and LaunchReadiness evidence."

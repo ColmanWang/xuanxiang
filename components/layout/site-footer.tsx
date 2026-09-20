@@ -5,6 +5,8 @@ const footerNavigation = [
   ["/graph", "玄象图谱"],
   ["/people", "人物"],
   ["/schools", "学派"],
+  ["/privacy", "隐私说明"],
+  ["/terms", "使用条款"],
 ] as const;
 
 export function SiteFooter() {

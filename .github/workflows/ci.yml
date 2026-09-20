@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: xuanxiang_ci
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres -d xuanxiang_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      APP_ENV: development
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/xuanxiang_ci?schema=public
+      DIRECT_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/xuanxiang_ci?schema=public
+      AI_ALLOW_TEST_PROVIDER: "true"
+      PUBLIC_AI_ENABLED: "false"
+      ENABLE_EDITORIAL_STUDIO: "false"
+      BETTER_AUTH_SECRET: ci-only-secret-at-least-thirty-two-characters
+      BETTER_AUTH_URL: https://ci.example
+      APP_URL: https://ci.example
+      TRUSTED_PROXY_HEADERS: vercel
+      UPSTASH_REDIS_REST_URL: https://ci.invalid
+      UPSTASH_REDIS_REST_TOKEN: ci-placeholder
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 11.9.0 }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Migration immutability
+        run: pnpm exec tsx scripts/phase11/check-migration-integrity.ts
+      - name: Prisma generate and validate
+        run: pnpm exec prisma generate && pnpm prisma:validate
+      - name: Apply migrations to isolated CI database
+        run: pnpm exec prisma migrate deploy
+      - name: Seed isolated CI database
+        run: pnpm prisma:seed
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm test
+        env:
+          NODE_ENV: test
+      - name: Phase 11 unit tests
+        run: pnpm exec vitest run --config scripts/phase11/vitest.config.mts
+      - run: pnpm content:validate
+      - run: pnpm bazi:verify-foundation
+      - run: pnpm liuyao:verify-foundation
+      - name: Offline AI regression (no real provider)
+        run: pnpm ai:eval
+      - name: Production build and environment gate
+        run: pnpm build
+        env:
+          NODE_ENV: production
+      - name: Dependency audit
+        run: pnpm audit --audit-level high
+
+  secret-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

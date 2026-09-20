@@ -6,9 +6,7 @@ export interface StudioEnvironment {
 }
 
 export function isStudioEnabled(environment: StudioEnvironment = process.env): boolean {
-  // Phase 9 intentionally has no authentication system. Even an accidentally
-  // configured production environment must therefore fail closed.
-  return environment.NODE_ENV !== "production" && environment.ENABLE_EDITORIAL_STUDIO === "true";
+  return environment.ENABLE_EDITORIAL_STUDIO === "true";
 }
 
 export function assertStudioAccess(environment: StudioEnvironment = process.env): void {

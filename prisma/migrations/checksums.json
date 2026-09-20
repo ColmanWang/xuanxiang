@@ -1,0 +1,11 @@
+{
+  "algorithm": "sha256",
+  "files": {
+    "20260809143628_initial_knowledge_base/migration.sql": "66597b6353956d68cd0fbf4297669583f7b37cf55e2a65f003da7c00a83e3cbb",
+    "20260809153824_add_classic_text_layer/migration.sql": "5f5c5c34bbd76b2565a9b38fd345f783982d4521c185d249cb18ac4318ccabe0",
+    "20260830120000_add_editorial_workspace/migration.sql": "1067b086ca8f31655083d13d287ac155cbdb2d2bb951afd8e16e44fa4aa2ec29",
+    "20260831150000_add_ai_rag_index/migration.sql": "90b141187d8d0b405a974572ecb604bde58a3a34ad0a6e9eaf5240940221fc68",
+    "20260831170000_add_ai_editorial_proposals/migration.sql": "331b30064d5a54693c3518aa720030cf3e4495941414fb33191fc59131e316c5",
+    "20260919190000_add_studio_auth_rbac/migration.sql": "c18cdab0e7f74b2e5ec0cc6ecffea7bae2543dff3a230093b062ecd1b419da4c"
+  }
+}

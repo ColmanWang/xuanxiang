@@ -337,6 +337,8 @@ model EditorialAuditLog {
   entityId       String
   action         EditorialAuditAction
   actor          String?              @default("LOCAL_EDITOR")
+  actorId        String?
+  actorRole      StudioRole?
   changeSummary  Json
   beforeSnapshot Json?
   afterSnapshot  Json?
@@ -344,6 +346,78 @@ model EditorialAuditLog {
 
   @@index([entityType, entityId, createdAt])
   @@index([action, createdAt])
+  @@index([actorId, createdAt])
+}
+
+model User {
+  id            String         @id
+  name          String
+  email         String         @unique
+  emailVerified Boolean        @default(false)
+  image         String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+  studioMember  StudioMember?
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@unique([providerId, accountId])
+}
+
+model Verification {
+  id         String    @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([identifier])
+}
+
+model StudioMember {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  role      StudioRole
+  enabled   Boolean    @default(true)
+  userId    String?    @unique
+  user      User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([enabled, role])
 }
 
 model AiEditorialProposal {
@@ -533,6 +607,12 @@ enum EditorialAuditAction {
   REVIEW
   ARCHIVE
   DELETE
+}
+
+enum StudioRole {
+  EDITOR
+  REVIEWER
+  ADMIN
 }
 
 enum SourceType {

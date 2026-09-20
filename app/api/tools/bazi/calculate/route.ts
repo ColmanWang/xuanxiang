@@ -3,10 +3,17 @@ import { ZodError } from "zod";
 import { DeterministicBaziEngine } from "@/lib/bazi/engine";
 import { birthInputSchema } from "@/lib/bazi/schema";
 import { CalculationError } from "@/lib/calendar/errors";
+import { createUpstashRateLimiter, rateLimitResponse } from "@/lib/security/rate-limit";
+import { clientIdentity, readJsonWithLimit, requestId, RequestTooLargeError } from "@/lib/security/request";
+
+const limiter = createUpstashRateLimiter("bazi");
 
 export async function POST(request: Request) {
+  const id = requestId(request);
   try {
-    const input = birthInputSchema.parse(await request.json());
+    const limit = await limiter.consume({ identity: clientIdentity(request), route: "bazi" });
+    if (!limit.allowed) return rateLimitResponse(limit, id);
+    const input = birthInputSchema.parse(await readJsonWithLimit(request, 64 * 1024));
 
     if (input.includeLuckCycles === true && input.sex !== "MALE" && input.sex !== "FEMALE") {
       throw new CalculationError("MISSING_RULE_INPUT", "计算大运需要选择男或女；该字段仅用于所选传统顺逆规则。", "sex");
@@ -17,6 +24,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ chart: new DeterministicBaziEngine().calculate(input) });
   } catch (error) {
+    if (error instanceof RequestTooLargeError) return NextResponse.json({ error: { code: "REQUEST_TOO_LARGE", message: "请求内容过长。" } }, { status: 413 });
+    if (error instanceof SyntaxError) return NextResponse.json({ error: { code: "INVALID_REQUEST", message: "请求体必须是 JSON。" } }, { status: 400 });
     if (error instanceof ZodError) {
       const isRuleIssue = error.issues.some(
         (issue) => issue.path[0] === "ruleSetId" || issue.path[0] === "ruleOverrides",

@@ -21,14 +21,14 @@ export interface DefaultAiRuntimeOptions { retrieve?: (request: AiAnswerRequest)
 function configuredChat(): { provider: ChatProvider; model: string; configured: boolean } {
   const baseUrl = process.env.AI_CHAT_BASE_URL?.trim(); const apiKey = process.env.AI_CHAT_API_KEY?.trim(); const model = process.env.AI_CHAT_MODEL?.trim();
   if (!baseUrl || !apiKey || !model) return { provider: new UnavailableChatProvider(), model: model || "unconfigured", configured: false };
-  return { provider: new OpenAiCompatibleChatProvider({ id: "openai-compatible-chat", baseUrl, apiKey }), model, configured: true };
+  return { provider: new OpenAiCompatibleChatProvider({ id: "openai-compatible-chat", baseUrl, apiKey, timeoutMs: Number(process.env.AI_CHAT_TIMEOUT_MS || 15_000) }), model, configured: true };
 }
 
 function configuredEmbedding(): { provider?: EmbeddingProvider; model: string } {
   const baseUrl = process.env.AI_EMBEDDING_BASE_URL?.trim(); const apiKey = process.env.AI_EMBEDDING_API_KEY?.trim(); const model = process.env.AI_EMBEDDING_MODEL?.trim() || "unconfigured";
   const dimensions = Number(process.env.AI_EMBEDDING_DIMENSIONS || "1536");
   if (!baseUrl || !apiKey || model === "unconfigured" || !Number.isInteger(dimensions) || dimensions < 1) return { model };
-  return { provider: new OpenAiCompatibleEmbeddingProvider({ id: process.env.AI_EMBEDDING_PROVIDER?.trim() || "openai-compatible", baseUrl, apiKey, dimensions }), model };
+  return { provider: new OpenAiCompatibleEmbeddingProvider({ id: process.env.AI_EMBEDDING_PROVIDER?.trim() || "openai-compatible", baseUrl, apiKey, dimensions, timeoutMs: Number(process.env.AI_EMBEDDING_TIMEOUT_MS || 15_000) }), model };
 }
 
 function searchTerms(value: string): string[] {
@@ -38,7 +38,7 @@ function searchTerms(value: string): string[] {
 
 function defaultRetriever() {
   const embedding = configuredEmbedding();
-  return async (request: AiAnswerRequest): Promise<readonly RetrievalResult[]> => {
+  const retrieve = async (request: AiAnswerRequest): Promise<readonly RetrievalResult[]> => {
     const content = await exportKnowledgeBase(prisma);
     const manifests = new RagIndexRepository(prisma);
     const manifest = embedding.provider
@@ -77,6 +77,10 @@ function defaultRetriever() {
       const graphDistance = graphEntityIds.has(document.entityId) ? 1 : undefined;
       return { document: { ...document, updatedAt: manifest.lastIndexedAt.toISOString() } as RetrievalResult["document"], score: exact * 4 + matches.length * 0.15 + vectorSimilarity + (graphDistance ? 0.5 : 0), retrievalMethods: [...(exact ? ["EXACT" as const] : []), ...(matches.length ? ["LEXICAL" as const] : []), ...(vectorScores.has(document.documentId) ? ["VECTOR" as const] : []), ...(graphDistance ? ["GRAPH" as const] : [])], matchedTerms: matches, graphDistance, citationCoverage: document.citationIds.length ? 1 : 0, editorialStatus: document.editorialStatus as RetrievalResult["editorialStatus"], signals: { exactMatch: exact, lexicalScore: matches.length, vectorSimilarity, graphDistance } };
     }).filter((result) => allowed.has(result.document.documentId) && result.score > 0).sort((a, b) => b.score - a.score).slice(0, 20);
+  };
+  return async (request: AiAnswerRequest): Promise<readonly RetrievalResult[]> => {
+    try { return await retrieve(request); }
+    catch { return []; }
   };
 }
 

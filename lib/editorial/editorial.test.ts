@@ -10,11 +10,10 @@ describe("editorial foundation", () => {
     expect(() => assertStudioAccess({ NODE_ENV: "production" })).toThrowError(EditorialError);
   });
 
-  it("allows development and explicit production enablement with a secret", () => {
+  it("allows development and production only through the explicit gate", () => {
     expect(isStudioEnabled({ NODE_ENV: "development" })).toBe(false);
     expect(isStudioEnabled({ NODE_ENV: "development", ENABLE_EDITORIAL_STUDIO: "true" })).toBe(true);
-    expect(isStudioEnabled({ NODE_ENV: "production", ENABLE_EDITORIAL_STUDIO: "true" })).toBe(false);
-    expect(isStudioEnabled({ NODE_ENV: "production", ENABLE_EDITORIAL_STUDIO: "true" })).toBe(false);
+    expect(isStudioEnabled({ NODE_ENV: "production", ENABLE_EDITORIAL_STUDIO: "true" })).toBe(true);
   });
 
   it("adapts domain records without duplicating their content", () => {

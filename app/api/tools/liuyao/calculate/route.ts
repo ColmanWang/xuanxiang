@@ -3,6 +3,10 @@ import { ZodError } from "zod";
 import { DeterministicLiuyaoEngine } from "@/lib/liuyao/engine";
 import { normalizeLiuyaoError, LiuyaoCalculationError } from "@/lib/liuyao/errors";
 import { liuyaoInputSchema } from "@/lib/liuyao/schema";
+import { createUpstashRateLimiter, rateLimitResponse } from "@/lib/security/rate-limit";
+import { clientIdentity, readJsonWithLimit, requestId, RequestTooLargeError } from "@/lib/security/request";
+
+const limiter = createUpstashRateLimiter("liuyao");
 
 function classifyZodError(error: ZodError, raw: unknown): LiuyaoCalculationError {
   if (typeof raw === "object" && raw !== null && "lineOrder" in raw && raw.lineOrder !== "BOTTOM_TO_TOP") {
@@ -23,10 +27,14 @@ function classifyZodError(error: ZodError, raw: unknown): LiuyaoCalculationError
 }
 
 export async function POST(request: Request) {
+  const id = requestId(request);
   let raw: unknown;
   try {
-    raw = await request.json();
-  } catch {
+    const limit = await limiter.consume({ identity: clientIdentity(request), route: "liuyao" });
+    if (!limit.allowed) return rateLimitResponse(limit, id);
+    raw = await readJsonWithLimit(request, 64 * 1024);
+  } catch (error) {
+    if (error instanceof RequestTooLargeError) return NextResponse.json({ error: { code: "REQUEST_TOO_LARGE", message: "请求内容过长。" } }, { status: 413 });
     return NextResponse.json({ error: { code: "INVALID_INPUT", message: "请求体必须是 JSON。" } }, { status: 400 });
   }
 

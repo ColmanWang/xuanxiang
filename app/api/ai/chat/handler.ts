@@ -1,6 +1,8 @@
 import { z, ZodError } from "zod";
 import { birthInputSchema } from "@/lib/bazi/schema";
 import { liuyaoInputSchema } from "@/lib/liuyao/schema";
+import { logRequest } from "@/lib/observability/logger";
+import { readJsonWithLimit, requestId, RequestTooLargeError, TimeoutError, withTimeout } from "@/lib/security/request";
 
 const MAX_REQUEST_BYTES = 32 * 1024;
 
@@ -50,39 +52,39 @@ function errorResponse(status: number, code: string, message: string, extra?: Re
   return Response.json({ error: { code, message, ...extra } }, { status });
 }
 
-async function readJson(request: Request): Promise<unknown> {
-  const declaredLength = Number(request.headers.get("content-length"));
-  if (Number.isFinite(declaredLength) && declaredLength > MAX_REQUEST_BYTES) throw new RequestTooLargeError();
-  const text = await request.text();
-  if (new TextEncoder().encode(text).byteLength > MAX_REQUEST_BYTES) throw new RequestTooLargeError();
-  return JSON.parse(text);
-}
-
-class RequestTooLargeError extends Error {}
-
-export function createAiChatHandler(dependencies: { answerService: AiAnswerService; rateLimiter: AiRateLimiter; resolveRateLimitKey?: (request: Request) => string }) {
+export function createAiChatHandler(dependencies: { answerService: AiAnswerService; rateLimiter: AiRateLimiter; resolveRateLimitKey?: (request: Request) => string; timeoutMs?: number }) {
   return async function POST(request: Request): Promise<Response> {
+    const id = requestId(request);
+    const startedAt = performance.now();
+    let status = 500;
+    let errorCode: string | undefined;
     try {
-      if (!request.headers.get("content-type")?.toLowerCase().startsWith("application/json")) return errorResponse(415, "UNSUPPORTED_MEDIA_TYPE", "请使用 JSON 提交请求。");
+      if (!request.headers.get("content-type")?.toLowerCase().startsWith("application/json")) { status = 415; errorCode = "UNSUPPORTED_MEDIA_TYPE"; return errorResponse(status, errorCode, "请使用 JSON 提交请求。"); }
       const declaredLength = Number(request.headers.get("content-length"));
       if (Number.isFinite(declaredLength) && declaredLength > MAX_REQUEST_BYTES) throw new RequestTooLargeError();
       const key = dependencies.resolveRateLimitKey?.(request) || "anonymous";
       const limit = await dependencies.rateLimiter.consume({ key, route: "/api/ai/chat" });
       if (!limit.allowed) {
+        status = 429; errorCode = "RATE_LIMITED";
         return Response.json(
-          { error: { code: "RATE_LIMITED", message: "请求过于频繁，请稍后再试。" } },
-          { status: 429, headers: limit.retryAfterSeconds ? { "retry-after": String(limit.retryAfterSeconds) } : undefined },
+          { error: { code: "RATE_LIMITED", message: "请求过于频繁，请稍后再试。", requestId: id } },
+          { status, headers: { ...(limit.retryAfterSeconds ? { "retry-after": String(limit.retryAfterSeconds) } : {}), "x-request-id": id } },
         );
       }
-      const input = aiChatRequestSchema.parse(await readJson(request));
-      const result = await dependencies.answerService.answer(input);
-      return Response.json({ ...result, readiness: result.readiness ?? "CHAT_ONLY" });
+      const input = aiChatRequestSchema.parse(await readJsonWithLimit(request, MAX_REQUEST_BYTES));
+      const result = await withTimeout(dependencies.answerService.answer(input), dependencies.timeoutMs ?? 30_000);
+      status = 200;
+      return Response.json({ ...result, readiness: result.readiness ?? "CHAT_ONLY" }, { headers: { "x-request-id": id } });
     } catch (error) {
-      if (error instanceof RequestTooLargeError) return errorResponse(413, "REQUEST_TOO_LARGE", "请求内容过长。");
+      if (error instanceof RequestTooLargeError) { status = 413; errorCode = "REQUEST_TOO_LARGE"; return errorResponse(status, errorCode, "请求内容过长。"); }
       if (error instanceof ZodError || error instanceof SyntaxError) {
-        return errorResponse(400, "INVALID_REQUEST", "请求格式不正确。", error instanceof ZodError ? { issues: error.issues.map((issue) => ({ path: issue.path.join("."), message: issue.message })) } : undefined);
+        status = 400; errorCode = "INVALID_REQUEST";
+        return errorResponse(status, errorCode, "请求格式不正确。", error instanceof ZodError ? { issues: error.issues.map((issue) => ({ path: issue.path.join("."), message: issue.message })) } : undefined);
       }
-      return errorResponse(503, "AI_UNAVAILABLE", "AI 暂不可用，知识库与推演功能不受影响。");
+      status = 503; errorCode = error instanceof TimeoutError ? "AI_TIMEOUT" : "AI_UNAVAILABLE";
+      return errorResponse(status, errorCode, "AI 暂不可用，知识库与推演功能不受影响。");
+    } finally {
+      logRequest({ requestId: id, route: "/api/ai/chat", status, duration: Math.round(performance.now() - startedAt), errorCode });
     }
   };
 }

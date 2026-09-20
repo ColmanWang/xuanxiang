@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import "./globals.css";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
@@ -6,6 +7,7 @@ import { ResearchModeProvider } from "@/components/research/research-mode-provid
 import { ThemeProvider } from "@/components/theme-provider";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.APP_URL ?? "http://localhost:3000"),
   title: {
     default: "玄象 | 中国传统思想与术数知识库",
     template: "%s | 玄象",
@@ -23,6 +25,20 @@ export const metadata: Metadata = {
   ],
   applicationName: "玄象",
   category: "传统文化知识库",
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    locale: "zh_CN",
+    url: "/",
+    siteName: "玄象",
+    title: "玄象 | 中国传统思想与术数知识库",
+    description: "探索易学、阴阳五行、道家思想、传统术数与中国宇宙观。",
+  },
+  twitter: {
+    card: "summary",
+    title: "玄象 | 中国传统思想与术数知识库",
+    description: "探索易学、阴阳五行、道家思想、传统术数与中国宇宙观。",
+  },
 };
 
 const designContract = `
@@ -43,11 +59,12 @@ try {
 } catch { document.documentElement.dataset.viewMode = "browse"; }
 `;
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     <html lang="zh-CN" data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: researchModeBootstrap }} />
+        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: researchModeBootstrap }} />
       </head>
       <body className="flex min-h-screen flex-col">
         <template
