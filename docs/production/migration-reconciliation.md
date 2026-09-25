@@ -2,7 +2,9 @@
 
 ## Current finding
 
-Historical Phase 9 checksum drift was reported, but this checkout has no reachable production-candidate database or `_prisma_migrations` export. Repository hashes alone cannot identify which deployed checksum differs or prove schema equivalence. Reconciliation is therefore **BLOCKED**, not passed. No database was reset or modified during Phase 11 preparation.
+Staging reconciliation is **RESOLVED** as of 2026-09-25. A fresh, isolated Neon Staging database received all six repository migrations through `prisma migrate deploy` over its direct connection. `prisma migrate status` then reported the schema up to date, pgvector 0.8.6 was present, and all six `_prisma_migrations.checksum` values matched `prisma/migrations/checksums.json`. No migration was failed or rolled back, and no database reset or `migrate resolve` was used.
+
+The earlier Phase 9 report is classified as **historical local drift**: it was not reproduced on the fresh Staging candidate and there is still no historical development-database export from which to identify the old differing row. Any future production candidate must repeat this comparison before deploy; the Staging result is evidence for this candidate, not permission to assume another database is clean.
 
 The repository baseline is `prisma/migrations/checksums.json`. `scripts/phase11/check-migration-integrity.ts` fails when a recorded migration changes, disappears, or when a new migration is not recorded. After a migration is applied anywhere shared, it is immutable; all later schema changes require a new migration.
 

@@ -6,6 +6,11 @@ import { validatePassageEntityLinks } from "@/lib/services/passage-link-validati
 
 type TransactionClient = Prisma.TransactionClient;
 
+export const CLASSIC_IMPORT_TRANSACTION_OPTIONS = {
+  maxWait: 10_000,
+  timeout: 30_000,
+} as const;
+
 export async function importClassicText(payload: ClassicTextImportPayload, client: PrismaClient = prisma) {
   const sections = validateClassicImport(payload);
   return client.$transaction(async (tx: TransactionClient) => {
@@ -28,5 +33,5 @@ export async function importClassicText(payload: ClassicTextImportPayload, clien
     await validatePassageEntityLinks(tx, links);
     for (const link of links) await tx.passageEntityLink.upsert({ where: { id: link.id }, update: { ...link, dataCategory }, create: { ...link, dataCategory } });
     return { classicId: classic.id, witnessId: payload.witness.id, sectionCount: sections.length, passageCount: sections.reduce((sum, section) => sum + (section.passages?.length ?? 0), 0), linkCount: links.length };
-  });
+  }, CLASSIC_IMPORT_TRANSACTION_OPTIONS);
 }
