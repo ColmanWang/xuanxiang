@@ -4,7 +4,7 @@ Allowed states are `PASS`, `BLOCKED`, and `WAIVED`. A waiver requires approver, 
 
 | Area | State | Current evidence / next action |
 | --- | --- | --- |
-| Remote CI | BLOCKED | GitHub Actions `CI` run #2 / ID `36112064489` passed the base commit `275b21fc6e858798e66ef2217ae185d29aa7a4cd`; the Neon seed timeout follow-up must pass remotely before this gate returns to PASS. |
+| Remote CI | PASS | GitHub Actions `CI` run #3 / ID `36114704976` passed `quality` and `secret-scan` for the code-bearing Neon follow-up commit `3f7b095b1948caa3acc50f19e0a7435895d24b1a`; this checklist-only evidence update remains subject to the same required workflow. |
 | Staging database | PASS | Independent Neon `xuanxiang-staging`; pooled runtime and direct migration connections verified on PostgreSQL 18.6, with pgvector 0.8.6 after migration. |
 | Production database | BLOCKED | No reachable production candidate or credential was supplied. |
 | Migration reconciliation | PASS | Fresh Staging applied 6/6 migrations; `migrate status` is current and all six database checksums match the repository manifest. Earlier reported drift is classified as historical local drift. |
