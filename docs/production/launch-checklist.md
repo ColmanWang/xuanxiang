@@ -15,7 +15,7 @@ Allowed states are `PASS`, `BLOCKED`, and `WAIVED`. A waiver requires approver, 
 | Published content snapshot | BLOCKED | No 1.0 export checksum/freeze evidence. |
 | Bazi foundation | PASS | Base release commit CI and Neon Staging verification passed; readiness remains `READY_WITH_LIMITATIONS` because Tier A independent luck-cycle fixtures are still zero. |
 | Liuyao foundation | PASS | Base release commit CI and Neon Staging verification passed; ruleset remains `EXPERIMENTAL` with documented month-jian and Fushen limitations. |
-| Rate limiting | BLOCKED | No production Redis configuration/load evidence. |
+| Rate limiting | PASS | Independent Upstash Redis `xuanxiang-staging` in Singapore passed TLS REST read/write and cross-instance shared-state checks. In production fail-closed mode, AI denied request 11/11, Bazi 61/61, Liuyao 61/61, and Search 121/121 with HTTP 429 and positive `Retry-After` values. Production still requires a separate Redis database. |
 | Security review | BLOCKED | See security review; staging and infrastructure evidence missing. |
 | Dependency audit | WAIVED | Next.js 16.3.6 and Prisma 7.10.0 are installed. Fixed transitive versions remove the `nanoid`, `js-yaml`, and `mysql2` High findings. `GHSA-ggr8-5vv4-36mx` remains only in Prisma's trusted config/tooling path and has a project-owner-approved waiver expiring 2026-10-31; CI automatically blocks it after expiry and blocks every other High/Critical finding. |
 | Observability / alerts | BLOCKED | No production monitoring project or alert delivery test. |
