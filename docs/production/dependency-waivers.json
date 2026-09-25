@@ -1,0 +1,18 @@
+[
+  {
+    "advisoryId": "GHSA-ggr8-5vv4-36mx",
+    "package": "deepmerge-ts",
+    "severity": "high",
+    "affectedVersion": "7.1.5",
+    "allowedPathSuffixes": ["prisma>@prisma/config>deepmerge-ts"],
+    "risk": "A recursive object graph can exhaust the stack during configuration merging.",
+    "reason": "Prisma 7.10.0 pins @prisma/config to deepmerge-ts 7.1.5; the patched deepmerge-ts 8.x is outside Prisma's declared dependency and cannot be forced without unsupported compatibility risk.",
+    "scope": "Prisma CLI and trusted build/migration configuration only; public requests do not supply objects to Prisma configuration merging.",
+    "owner": "Xuanxiang 1.0 release owner",
+    "approvedBy": "Project owner",
+    "approvedAt": "2026-09-25",
+    "expiresAt": "2026-10-31",
+    "mitigation": "Pin dependencies, keep Prisma configuration static and repository-controlled, reject all other high/critical advisories, and track Prisma for a compatible fixed release.",
+    "upstreamPlan": "Upgrade immediately when a stable Prisma release adopts deepmerge-ts 8.x or another patched implementation."
+  }
+]

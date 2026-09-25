@@ -15,7 +15,7 @@ Allowed states are `PASS`, `BLOCKED`, and `WAIVED`. A waiver requires approver, 
 | Liuyao foundation | BLOCKED | Must pass on the release commit; documented limitations remain. |
 | Rate limiting | BLOCKED | No production Redis configuration/load evidence. |
 | Security review | BLOCKED | See security review; staging and infrastructure evidence missing. |
-| Dependency audit | BLOCKED | Next.js critical advisories were removed by upgrading to 16.3.3 and Playwright to 1.55.1; npm audit still reports two high Prisma toolchain transitive advisories (`deepmerge-ts`, `mysql2`) requiring upstream-compatible remediation or a documented release waiver. |
+| Dependency audit | WAIVED | Next.js 16.3.6 and Prisma 7.10.0 are installed. Fixed transitive versions remove the `nanoid`, `js-yaml`, and `mysql2` High findings. `GHSA-ggr8-5vv4-36mx` remains only in Prisma's trusted config/tooling path and has a project-owner-approved waiver expiring 2026-10-31; CI automatically blocks it after expiry and blocks every other High/Critical finding. |
 | Observability / alerts | BLOCKED | No production monitoring project or alert delivery test. |
 | SEO / privacy | BLOCKED | Release-domain crawl and policy review not completed. |
 | CI/CD | BLOCKED | Workflows exist but have not passed remotely and deployment is intentionally not configured. |

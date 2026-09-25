@@ -1,8 +1,9 @@
-import { fileURLToPath } from "node:url";
+import { existsSync } from "node:fs";
 import { loadEnvFile } from "node:process";
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
 
-loadEnvFile();
+if (existsSync(".env")) loadEnvFile();
 
 export default defineConfig({
   resolve: {

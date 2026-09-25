@@ -2,7 +2,7 @@
 
 Status on 2026-09-20: **BLOCKED**. Code-level controls can be reviewed locally, but no staging penetration test, production secret-store review, OAuth redirect verification, database network review, dependency acceptance, or operational ownership evidence was supplied.
 
-The official-registry production audit initially found two critical Next.js advisories and a high Playwright advisory. Next.js was upgraded from 16.3.0 to 16.3.3 and Playwright from 1.55.0 to 1.55.1, removing those findings. The follow-up audit still reports two high transitive advisories in Prisma's bundled tooling (`deepmerge-ts <8` and `mysql2 <3.22`). The application uses PostgreSQL, not MySQL, but the audit gate remains BLOCKED until compatible upstream updates, tested overrides, or an explicitly approved time-bounded waiver exist.
+The official-registry production audit initially found two critical Next.js advisories and a high Playwright advisory. Next.js is now 16.3.6 and Playwright is 1.55.1. Stable same-major overrides remove the later `nanoid`, `js-yaml`, and `mysql2` High findings. Prisma 7.10.0 still pins `@prisma/config` to `deepmerge-ts 7.1.5`; forcing the patched 8.x major would be outside Prisma's compatibility contract. The project owner approved a time-bound waiver for `GHSA-ggr8-5vv4-36mx` through 2026-10-31, limited to trusted Prisma configuration/build/migration tooling. Public inputs cannot reach this merge path. `pnpm dependency:audit` fails on every other High/Critical advisory and automatically fails this waiver after expiry. The waiver record is `docs/production/dependency-waivers.json`.
 
 ## Required evidence
 

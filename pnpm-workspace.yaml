@@ -3,7 +3,13 @@ allowBuilds:
   '@sentry/cli': false
   esbuild: true
   prisma: true
+  unrs-resolver: false
 onlyBuiltDependencies:
   - "@prisma/engines"
   - esbuild
   - prisma
+overrides:
+  "@better-auth/core": 1.7.5
+  "nanoid@<3.3.18": 3.3.19
+  "js-yaml@>=4.0.0 <4.3.2": 4.3.2
+  "mysql2@<3.22.0": 3.22.0
