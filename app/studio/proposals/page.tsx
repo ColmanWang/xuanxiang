@@ -1,7 +1,8 @@
+import { requireStudioPageAccess } from "../_lib/gate";
 import { listAiEditorialProposals } from "@/lib/ai/proposals/service";
 import { AiProposalActions } from "@/components/studio/ai-proposal-actions";
 
-export default async function AiProposalsPage() {
+export default async function AiProposalsPage() {await requireStudioPageAccess();
   const proposals = await listAiEditorialProposals();
   return <main><h2 className="font-serif text-3xl">AI 候选提议</h2><p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">AI 只能提交带既有证据的候选摘要。接受后仍经过 Editorial Service 校验并写入审计记录；不会自动发布或标记为已校订。</p>
     <div className="mt-8 space-y-4">{proposals.length ? proposals.map((proposal) => {

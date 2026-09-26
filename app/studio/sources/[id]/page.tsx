@@ -1,2 +1,3 @@
+import { requireStudioPageAccess } from "../../_lib/gate";
 import { notFound } from "next/navigation";import { SourceEditor } from "@/components/studio/record-editor";import { StudioPageHeader } from "@/components/studio/studio-ui";import { getStudioSource } from "../../_lib/data";
-export default async function Page({params}:{params:Promise<{id:string}>}){const{id}=await params;const item=await getStudioSource(id);if(!item)notFound();return <div className="space-y-7"><StudioPageHeader title={item.title} description="修改资料身份、版本与说明；引用数据不随此表单自动改写。"/><SourceEditor item={item}/></div>}
+export default async function Page({params}:{params:Promise<{id:string}>}){await requireStudioPageAccess();const{id}=await params;const item=await getStudioSource(id);if(!item)notFound();return <div className="space-y-7"><StudioPageHeader title={item.title} description="修改资料身份、版本与说明；引用数据不随此表单自动改写。"/><SourceEditor item={item}/></div>}

@@ -1,9 +1,10 @@
+import { requireStudioPageAccess } from "../../../../_lib/gate";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { getStudioEntry } from "../../../../_lib/data";
 
-export default async function StudioEntryPreviewPage({params}:{params:Promise<{type:string;id:string}>}){
+export default async function StudioEntryPreviewPage({params}:{params:Promise<{type:string;id:string}>}){await requireStudioPageAccess();
   const {type,id}=await params;
   const entry=await getStudioEntry(type,id);
   if(!entry)notFound();
