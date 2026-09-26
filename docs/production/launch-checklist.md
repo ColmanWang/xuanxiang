@@ -21,8 +21,10 @@ Allowed states are `PASS`, `BLOCKED`, and `WAIVED`. A waiver requires approver, 
 | Sentry staging ingestion | PASS | Independent Sentry project `xuanxiang-staging` received the sanitized Phase 11.1 test exception in environment `staging`; event ID `1ac90b5daa8a4a39b205ab6791824e8c` was confirmed in the Sentry issue UI. `sendDefaultPii` was disabled and the repository `beforeSend` sanitizer was active. |
 | Observability / alerts | BLOCKED | Sentry event ingestion is verified, but 5xx, rate-limit, database-failure, and AI-provider-failure signals plus alert delivery have not all been exercised. No production monitoring project exists yet. |
 | SEO / privacy | BLOCKED | Release-domain crawl and policy review not completed. |
-| Staging / production deployment | BLOCKED | Remote CI passes, but no Vercel Staging or production deployment exists yet. |
-| Production smoke | BLOCKED | No deployment URL; smoke has not run. |
+| Staging deployment | PASS | Vercel project `xuanxiang-staging` deployed commit `d47b025` at `https://xuanxiang-staging.vercel.app` with AI and Studio disabled. The post-configuration redeployment reached `Ready`; the public homepage and health endpoint returned HTTP 200, and health reported database `ok`, app version `1.0.0`, Bazi engine `1.2.0`, and Liuyao engine `1.0.0`. |
+| Staging core smoke | PASS | `pnpm production:smoke --url https://xuanxiang-staging.vercel.app` passed homepage, Knowledge, Classics, health, read-only Search, deterministic Bazi fingerprint `xx-bazi-edb3eb8a`, and deterministic Liuyao fingerprint `xx-liuyao-7cb97a9c`. AI remained disabled as required. |
+| Production deployment | BLOCKED | No separate production infrastructure or deployment exists yet. |
+| Production smoke | BLOCKED | No production deployment URL; production smoke has not run. |
 | AI providers | BLOCKED | No real-provider credentials/acceptance results. AI must remain disabled. |
 | RAG production index | BLOCKED | No production rebuild manifest/checksum. |
 
