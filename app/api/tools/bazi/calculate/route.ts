@@ -12,7 +12,7 @@ export async function POST(request: Request) {
   const id = requestId(request);
   try {
     const limit = await limiter.consume({ identity: clientIdentity(request), route: "bazi" });
-    if (!limit.allowed) return rateLimitResponse(limit, id);
+    if (!limit.allowed) return rateLimitResponse(limit, id, "bazi");
     const input = birthInputSchema.parse(await readJsonWithLimit(request, 64 * 1024));
 
     if (input.includeLuckCycles === true && input.sex !== "MALE" && input.sex !== "FEMALE") {

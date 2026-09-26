@@ -1,5 +1,6 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
+import { reportOperationalSignal } from "@/lib/observability/signals";
 
 export type RateLimitRoute = "ai" | "bazi" | "liuyao" | "search";
 export type RateLimitResult = { allowed: true } | { allowed: false; retryAfterSeconds?: number; errorCode: "RATE_LIMITED" | "RATE_LIMIT_UNAVAILABLE" };
@@ -10,6 +11,13 @@ const policies: Record<RateLimitRoute, { requests: number; window: `${number} ${
   bazi: { requests: 60, window: "1 m" },
   liuyao: { requests: 60, window: "1 m" },
   search: { requests: 120, window: "1 m" },
+};
+
+const routePaths: Record<RateLimitRoute, string> = {
+  ai: "/api/ai/chat",
+  bazi: "/api/tools/bazi/calculate",
+  liuyao: "/api/tools/liuyao/calculate",
+  search: "/api/search",
 };
 
 export function createDistributedRateLimiter(options: { client?: RateLimitClient; production?: boolean; prefix?: string; now?: () => number } = {}) {
@@ -37,6 +45,7 @@ export function createUpstashRateLimiter(route: RateLimitRoute) {
   return createDistributedRateLimiter({ client: ratelimit, prefix: "v1" });
 }
 
-export function rateLimitResponse(result: Exclude<RateLimitResult, { allowed: true }>, id: string): Response {
+export function rateLimitResponse(result: Exclude<RateLimitResult, { allowed: true }>, id: string, route: RateLimitRoute): Response {
+  reportOperationalSignal("rate_limit", { route: routePaths[route], requestId: id, errorCode: result.errorCode, status: 429 });
   return Response.json({ error: { code: result.errorCode, message: "请求过于频繁，请稍后重试。", requestId: id } }, { status: 429, headers: { "retry-after": String(result.retryAfterSeconds ?? 60), "x-request-id": id } });
 }

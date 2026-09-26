@@ -2,6 +2,12 @@
 
 Start every incident by recording time, environment, commit, migration head, index version, symptoms, and incident commander. Preserve evidence; redact secrets and personal data.
 
+## Operational signals and alerts
+
+The application emits the Sentry metric `xuanxiang.operational.signal` with low-cardinality `signal`, `route`, `error_code`, and `status` attributes. Expected rate-limit denials use `signal=rate_limit` and do not create an Issue. Database and AI-provider failures create sanitized Sentry Issues named `Operational signal: database_failure` and `Operational signal: ai_provider_failure`; responses with status 500 or higher also increment `xuanxiang.http.5xx`. Request IDs may be attached for correlation, but request bodies, prompts, calculation inputs, credentials, and database details must never be sent.
+
+Staging and production require separate alert rules and notification destinations. Exercise each rule in its own environment and retain the event/metric timestamp plus delivery evidence. A configured rule is not accepted as verified until a notification reaches the assigned operator.
+
 ## AI provider down
 
 Disable the public AI feature flag, verify Core health and deterministic tools, check provider status/latency without logging prompts or keys, and re-enable only after real-provider smoke and grounding checks pass. Core launch remains independent.

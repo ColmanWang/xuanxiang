@@ -31,7 +31,7 @@ export async function POST(request: Request) {
   let raw: unknown;
   try {
     const limit = await limiter.consume({ identity: clientIdentity(request), route: "liuyao" });
-    if (!limit.allowed) return rateLimitResponse(limit, id);
+    if (!limit.allowed) return rateLimitResponse(limit, id, "liuyao");
     raw = await readJsonWithLimit(request, 64 * 1024);
   } catch (error) {
     if (error instanceof RequestTooLargeError) return NextResponse.json({ error: { code: "REQUEST_TOO_LARGE", message: "请求内容过长。" } }, { status: 413 });
