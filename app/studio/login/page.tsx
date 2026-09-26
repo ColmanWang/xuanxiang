@@ -1,5 +1,5 @@
 import { getStudioOAuthConfig } from "@/lib/auth/config";
-import { signInToStudio } from "./actions";
+import { StudioSignInButton } from "./sign-in-button";
 
 export default function StudioLoginPage() {
   const oauth = getStudioOAuthConfig();
@@ -12,11 +12,7 @@ export default function StudioLoginPage() {
           <p className="text-sm text-muted-foreground">仅允许已加入 Studio 白名单的编辑人员访问。</p>
         </div>
         {oauth ? (
-          <form action={signInToStudio}>
-            <button className="w-full border bg-foreground px-4 py-3 text-background" type="submit">
-              使用 {oauth.provider === "github" ? "GitHub" : "Google"} 继续
-            </button>
-          </form>
+          <StudioSignInButton provider={oauth.provider} />
         ) : <p className="text-sm text-destructive">Studio OAuth 尚未配置，请联系管理员。</p>}
       </section>
     </main>
