@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hasStudioPermission, STUDIO_PERMISSIONS } from "./permissions";
+import { getStudioEntryCapabilities, hasStudioPermission, STUDIO_PERMISSIONS } from "./permissions";
 import { EditorialErrorCode } from "@/lib/editorial/errors";
 
 describe("Studio RBAC", () => {
@@ -24,6 +24,12 @@ describe("Studio RBAC", () => {
     }
     expect(hasStudioPermission("REVIEWER", STUDIO_PERMISSIONS.IMPORT)).toBe(false);
     expect(hasStudioPermission("REVIEWER", STUDIO_PERMISSIONS.MANAGE_AUTH)).toBe(false);
+  });
+
+  it("exposes only role-appropriate entry controls", () => {
+    expect(getStudioEntryCapabilities("EDITOR")).toEqual({ canReview: false, canPublish: false, canArchive: false });
+    expect(getStudioEntryCapabilities("REVIEWER")).toEqual({ canReview: true, canPublish: true, canArchive: false });
+    expect(getStudioEntryCapabilities("ADMIN")).toEqual({ canReview: true, canPublish: true, canArchive: true });
   });
 
   it("exposes stable authentication and authorization errors", () => {

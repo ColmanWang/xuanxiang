@@ -35,3 +35,11 @@ const permissionsByRole: Readonly<Record<StudioRoleName, ReadonlySet<StudioPermi
 export function hasStudioPermission(role: StudioRoleName, permission: StudioPermission): boolean {
   return permissionsByRole[role].has(permission);
 }
+
+export function getStudioEntryCapabilities(role: StudioRoleName) {
+  return {
+    canReview: hasStudioPermission(role, STUDIO_PERMISSIONS.MARK_REVIEWED),
+    canPublish: hasStudioPermission(role, STUDIO_PERMISSIONS.PUBLISH),
+    canArchive: hasStudioPermission(role, STUDIO_PERMISSIONS.ARCHIVE),
+  };
+}
