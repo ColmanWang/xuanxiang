@@ -10,7 +10,7 @@ type SignalFields = {
   status: number;
 };
 
-export function reportOperationalSignal(signal: OperationalSignal, fields: SignalFields): void {
+export async function reportOperationalSignal(signal: OperationalSignal, fields: SignalFields): Promise<void> {
   const attributes = {
     signal,
     route: fields.route,
@@ -32,6 +32,7 @@ export function reportOperationalSignal(signal: OperationalSignal, fields: Signa
         tags: attributes,
         extra: { requestId: fields.requestId },
       });
+      await Sentry.flush(2_000);
     }
   } catch {
     // Telemetry must never change the API response path.

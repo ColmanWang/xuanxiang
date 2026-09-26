@@ -12,7 +12,7 @@ export async function GET(request: Request) {
     await withTimeout(prisma.$queryRaw`SELECT 1`, Number(process.env.DB_HEALTH_TIMEOUT_MS || 2_000));
     database = "ok";
   } catch {
-    reportOperationalSignal("database_failure", { route: "/api/health", requestId: requestId(request), errorCode: "DATABASE_UNAVAILABLE", status: 503 });
+    await reportOperationalSignal("database_failure", { route: "/api/health", requestId: requestId(request), errorCode: "DATABASE_UNAVAILABLE", status: 503 });
   }
   return Response.json(
     { app: "xuanxiang", status: database === "ok" ? "ok" : "degraded", database, version: process.env.APP_VERSION || "unknown", engines: { bazi: BAZI_ENGINE_VERSION, liuyao: LIUYAO_ENGINE_VERSION } },

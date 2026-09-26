@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { count, captureMessage, warn, error } = vi.hoisted(() => ({
+const { count, captureMessage, flush, warn, error } = vi.hoisted(() => ({
   count: vi.fn(),
   captureMessage: vi.fn(),
+  flush: vi.fn().mockResolvedValue(true),
   warn: vi.fn(),
   error: vi.fn(),
 }));
@@ -10,6 +11,7 @@ const { count, captureMessage, warn, error } = vi.hoisted(() => ({
 vi.mock("@sentry/nextjs", () => ({
   metrics: { count },
   captureMessage,
+  flush,
 }));
 
 vi.mock("./logger", () => ({
@@ -21,8 +23,8 @@ import { reportOperationalSignal } from "./signals";
 describe("operational signals", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("counts expected rate-limit denials without creating an error issue", () => {
-    reportOperationalSignal("rate_limit", {
+  it("counts expected rate-limit denials without creating or flushing an error issue", async () => {
+    await reportOperationalSignal("rate_limit", {
       route: "/api/search",
       requestId: "request-1",
       errorCode: "RATE_LIMITED",
@@ -34,10 +36,11 @@ describe("operational signals", () => {
     });
     expect(warn).toHaveBeenCalledWith(expect.objectContaining({ signal: "rate_limit", requestId: "request-1" }), "operational.signal");
     expect(captureMessage).not.toHaveBeenCalled();
+    expect(flush).not.toHaveBeenCalled();
   });
 
-  it("reports database failures as sanitized error events and 5xx metrics", () => {
-    reportOperationalSignal("database_failure", {
+  it("reports database failures as sanitized error events and flushes them before the response ends", async () => {
+    await reportOperationalSignal("database_failure", {
       route: "/api/health",
       requestId: "health-check",
       errorCode: "DATABASE_UNAVAILABLE",
@@ -53,5 +56,6 @@ describe("operational signals", () => {
       tags: { signal: "database_failure", route: "/api/health", error_code: "DATABASE_UNAVAILABLE", status: "503" },
       extra: { requestId: "health-check" },
     });
+    expect(flush).toHaveBeenCalledWith(2_000);
   });
 });

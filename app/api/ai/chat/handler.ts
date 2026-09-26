@@ -67,7 +67,7 @@ export function createAiChatHandler(dependencies: { answerService: AiAnswerServi
       const limit = await dependencies.rateLimiter.consume({ key, route: "/api/ai/chat" });
       if (!limit.allowed) {
         status = 429; errorCode = "RATE_LIMITED";
-        reportOperationalSignal("rate_limit", { route: "/api/ai/chat", requestId: id, errorCode, status });
+        void reportOperationalSignal("rate_limit", { route: "/api/ai/chat", requestId: id, errorCode, status });
         return Response.json(
           { error: { code: "RATE_LIMITED", message: "请求过于频繁，请稍后再试。", requestId: id } },
           { status, headers: { ...(limit.retryAfterSeconds ? { "retry-after": String(limit.retryAfterSeconds) } : {}), "x-request-id": id } },
@@ -84,7 +84,7 @@ export function createAiChatHandler(dependencies: { answerService: AiAnswerServi
         return errorResponse(status, errorCode, "请求格式不正确。", error instanceof ZodError ? { issues: error.issues.map((issue) => ({ path: issue.path.join("."), message: issue.message })) } : undefined);
       }
       status = 503; errorCode = error instanceof TimeoutError ? "AI_TIMEOUT" : "AI_UNAVAILABLE";
-      reportOperationalSignal("ai_provider_failure", { route: "/api/ai/chat", requestId: id, errorCode, status });
+      await reportOperationalSignal("ai_provider_failure", { route: "/api/ai/chat", requestId: id, errorCode, status });
       return errorResponse(status, errorCode, "AI 暂不可用，知识库与推演功能不受影响。");
     } finally {
       logRequest({ requestId: id, route: "/api/ai/chat", status, duration: Math.round(performance.now() - startedAt), errorCode });

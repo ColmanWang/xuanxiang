@@ -46,6 +46,6 @@ export function createUpstashRateLimiter(route: RateLimitRoute) {
 }
 
 export function rateLimitResponse(result: Exclude<RateLimitResult, { allowed: true }>, id: string, route: RateLimitRoute): Response {
-  reportOperationalSignal("rate_limit", { route: routePaths[route], requestId: id, errorCode: result.errorCode, status: 429 });
+  void reportOperationalSignal("rate_limit", { route: routePaths[route], requestId: id, errorCode: result.errorCode, status: 429 });
   return Response.json({ error: { code: result.errorCode, message: "请求过于频繁，请稍后重试。", requestId: id } }, { status: 429, headers: { "retry-after": String(result.retryAfterSeconds ?? 60), "x-request-id": id } });
 }
