@@ -1,4 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 
 vi.mock("@/lib/services/knowledge-service", () => ({
   knowledgeService: {
@@ -13,6 +15,7 @@ vi.mock("@/lib/services/knowledge-service", () => ({
 import { metadata } from "@/app/layout";
 import robots from "@/app/robots";
 import sitemap, { buildSitemap } from "@/app/sitemap";
+import PrivacyPage from "@/app/privacy/page";
 import { knowledgeService } from "@/lib/services/knowledge-service";
 
 describe("public site discovery", () => {
@@ -57,5 +60,14 @@ describe("public site discovery", () => {
     const urls = (await sitemap()).map((entry) => entry.url);
     expect(urls).toContain(`${process.env.APP_URL ?? "http://localhost:3000"}/privacy`);
     expect(urls).not.toContain(`${process.env.APP_URL ?? "http://localhost:3000"}/ask`);
+  });
+
+  it("publishes the accepted privacy contact, retention, and request process", () => {
+    const html = renderToStaticMarkup(createElement(PrivacyPage));
+
+    expect(html).toContain("colmanwang.001@gmail.com");
+    expect(html).toContain("30 天");
+    expect(html).toContain("访问、更正或删除");
+    expect(html).toContain("个人非商业 GitHub 项目");
   });
 });
