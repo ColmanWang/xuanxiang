@@ -1,6 +1,21 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { maintenanceModeEnabled } from "@/lib/config/features";
 
+function sentryConnectSource(): string {
+  const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
+  if (!dsn) return "";
+  try {
+    const url = new URL(dsn);
+    // Support hosted Sentry ingestion only; never interpolate an unparsed DSN.
+    if (url.protocol !== "https:" || url.password || url.port || !url.username ||
+      !/^o\d+\.ingest(?:\.us|\.de)?\.sentry\.io$/.test(url.hostname) ||
+      !/^\/\d+$/.test(url.pathname) || url.search || url.hash) return "";
+    return ` ${url.origin}`;
+  } catch {
+    return "";
+  }
+}
+
 function csp(nonce: string): string {
   const developmentEval = process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : "";
   return [
@@ -9,7 +24,7 @@ function csp(nonce: string): string {
     `style-src 'self' 'nonce-${nonce}'`,
     "img-src 'self' blob: data:",
     "font-src 'self'",
-    "connect-src 'self'",
+    `connect-src 'self'${sentryConnectSource()}`,
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
