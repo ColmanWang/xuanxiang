@@ -18,5 +18,5 @@ for (const [name, count] of Object.entries(plan.summary)) console.log(`${name}: 
 for (const issue of plan.validation.issues) console.log(`${issue.severity} ${issue.code}: ${issue.message}`);
 if (plan.validation.status === "FAIL") { await prisma.$disconnect(); process.exitCode = 1; }
 else if (!apply) { console.log("DRY RUN：未写入数据库。使用 --apply 明确执行导入。"); await prisma.$disconnect(); }
-else { await prisma.$transaction(async (tx) => applyKnowledgeBase(tx, input)); console.log("内容导入事务已提交。"); await prisma.$disconnect(); }}
+else { await prisma.$transaction(async (tx) => applyKnowledgeBase(tx, input), { timeout: 120_000 }); console.log("内容导入事务已提交。"); await prisma.$disconnect(); }}
 void main().catch(async(error)=>{console.error(error instanceof Error?error.message:error);await prisma.$disconnect();process.exitCode=1});

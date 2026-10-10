@@ -1,5 +1,21 @@
 [
   {
+    "advisoryId": "GHSA-vfj7-8cjw-p6xm",
+    "package": "braces",
+    "severity": "high",
+    "affectedVersion": "3.0.3",
+    "allowedPathSuffixes": [".>eslint-config-next>@next/eslint-plugin-next>fast-glob>micromatch>braces"],
+    "risk": "Deeply nested brace patterns can exhaust the stack and terminate lint/CI processing.",
+    "reason": "GitHub advisory reports no patched version; official npm latest is 3.0.3 and micromatch 4.0.8 still depends on braces ^3.0.3. No unpublished version or unsupported fork is installed.",
+    "scope": "Exact audited ESLint dev-tool dependency path only. Application code has no direct calls and 73 local production NFT traces contain no braces/micromatch/fast-glob entries; this is candidate-build evidence, not a universal runtime guarantee.",
+    "owner": "Xuanxiang 1.0 release owner",
+    "approvedBy": "Project owner",
+    "approvedAt": "2026-10-10",
+    "expiresAt": "2026-10-24",
+    "mitigation": "Keep ESLint glob settings static and repository-controlled; review PR configuration changes before trusted execution. Preserve exact-version/path audit matching, reject other High/Critical findings and recheck deployed traces before release. CI denial-of-service risk remains.",
+    "upstreamPlan": "Recheck upstream before expiry and upgrade immediately when a supported patched release or dependency path is available. Expiry blocks the gate automatically."
+  },
+  {
     "advisoryId": "GHSA-ggr8-5vv4-36mx",
     "package": "deepmerge-ts",
     "severity": "high",

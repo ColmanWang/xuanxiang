@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
 import { evaluateDependencyAudit, parseAuditReport } from "./dependency-audit";
 
 const activeWaiver = {
@@ -19,6 +20,15 @@ const approvedFinding = {
 };
 
 describe("dependency audit waiver gate", () => {
+  it("bounds the approved braces waiver to its exact dev path, version and expiry", () => {
+    const waivers = JSON.parse(readFileSync("docs/production/dependency-waivers.json", "utf8"));
+    const finding = { githubAdvisoryId: "GHSA-vfj7-8cjw-p6xm", moduleName: "braces", severity: "high", versions: ["3.0.3"], paths: [".>eslint-config-next>@next/eslint-plugin-next>fast-glob>micromatch>braces"] };
+    expect(evaluateDependencyAudit([finding], waivers, new Date("2026-10-24T00:00:00Z")).blocked).toHaveLength(0);
+    expect(evaluateDependencyAudit([finding], waivers, new Date("2026-10-25T00:00:00Z")).blocked).toHaveLength(1);
+    for (const change of [{ paths: [".>runtime>braces"] }, { versions: ["3.0.2"] }, { severity: "critical" }]) {
+      expect(evaluateDependencyAudit([{ ...finding, ...change }], waivers, new Date("2026-10-10T00:00:00Z")).blocked).toHaveLength(1);
+    }
+  });
   it("accepts the approved advisory before its expiry", () => {
     expect(evaluateDependencyAudit([
       approvedFinding,

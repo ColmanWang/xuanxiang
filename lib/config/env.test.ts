@@ -4,6 +4,7 @@ import { validateProductionEnv } from "./env";
 const base = {
   NODE_ENV: "production",
   DATABASE_URL: "postgresql://app:secret@db.example/xuanxiang",
+  DIRECT_DATABASE_URL: "postgresql://migration:secret@db.example/xuanxiang",
   APP_URL: "https://xuanxiang.example",
   BETTER_AUTH_SECRET: "a".repeat(32),
   BETTER_AUTH_URL: "https://xuanxiang.example",
@@ -15,6 +16,17 @@ const base = {
 describe("validateProductionEnv", () => {
   it("accepts a production deployment with public AI disabled", () => {
     expect(validateProductionEnv({ ...base, PUBLIC_AI_ENABLED: "false" }).PUBLIC_AI_ENABLED).toBe(false);
+  });
+
+  it("accepts production runtime without migration credentials", () => {
+    const withoutDirectUrl: Record<string, string> = { ...base };
+    delete withoutDirectUrl.DIRECT_DATABASE_URL;
+    const result = validateProductionEnv(
+      { ...withoutDirectUrl, PUBLIC_AI_ENABLED: "false" },
+      { throwOnError: false },
+    );
+
+    expect(result).toMatchObject({ PUBLIC_AI_ENABLED: false });
   });
 
   it("does not expose secret values when validation fails", () => {
