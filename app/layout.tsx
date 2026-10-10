@@ -71,7 +71,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           id="xuanxiang-design-contract"
           dangerouslySetInnerHTML={{ __html: designContract }}
         />
-        <ThemeProvider>
+        <ThemeProvider nonce={nonce}>
           <ResearchModeProvider>
             <SiteHeader />
             <main className="flex-1">{children}</main>
