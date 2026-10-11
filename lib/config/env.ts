@@ -1,6 +1,14 @@
 import { z } from "zod";
 
 const booleanString = z.enum(["true", "false"]).default("false").transform((value) => value === "true");
+const publicSentryDsn = z.url().refine((value) => {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && !!url.username && !url.password && !url.port
+      && /^o\d+\.ingest(?:\.us|\.de)?\.sentry\.io$/.test(url.hostname)
+      && /^\/\d+$/.test(url.pathname) && !url.search && !url.hash;
+  } catch { return false; }
+}, "Public Sentry DSN must be a hosted HTTPS ingestion URL without private credentials");
 const productionSchema = z.object({
   NODE_ENV: z.literal("production"),
   DATABASE_URL: z.url(),
@@ -28,10 +36,13 @@ const productionSchema = z.object({
   AI_EMBEDDING_API_KEY: z.string().min(1).optional(),
   AI_EMBEDDING_MODEL: z.string().min(1).optional(),
   SENTRY_DSN: z.url().optional(),
+  NEXT_PUBLIC_SENTRY_DSN: publicSentryDsn.optional(),
   APP_VERSION: z.string().min(1).default("unknown"),
   COMMIT_SHA: z.string().min(1).optional(),
 }).passthrough().superRefine((env, context) => {
   for (const key of Object.keys(env)) {
+    // Sentry's browser ingestion DSN is public by design, not an auth token.
+    if (key === "NEXT_PUBLIC_SENTRY_DSN") continue;
     if (/^NEXT_PUBLIC_.*(?:KEY|SECRET|TOKEN|PASSWORD|DATABASE|DSN)/i.test(key)) context.addIssue({ code: "custom", path: [key], message: `${key} must remain server-only` });
   }
   for (const key of ["APP_URL", "BETTER_AUTH_URL", "UPSTASH_REDIS_REST_URL"] as const) {

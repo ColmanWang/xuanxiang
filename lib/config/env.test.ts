@@ -14,6 +14,25 @@ const base = {
 };
 
 describe("validateProductionEnv", () => {
+  it("accepts a hosted public Sentry DSN", () => {
+    expect(validateProductionEnv({ ...base, NEXT_PUBLIC_SENTRY_DSN: "https://publickey@o123.ingest.us.sentry.io/456" })).toMatchObject({ NODE_ENV: "production" });
+  });
+
+  it.each([
+    "http://publickey@o123.ingest.us.sentry.io/456",
+    "https://publickey:password@o123.ingest.us.sentry.io/456",
+    "https://publickey@evil.example/456",
+    "not-a-url",
+    "https://publickey@o123.ingest.us.sentry.io/456?token=secret",
+  ])("rejects unsafe public Sentry DSN without echoing it", (dsn) => {
+    const result = validateProductionEnv({ ...base, NEXT_PUBLIC_SENTRY_DSN: dsn }, { throwOnError: false });
+    expect(result).toMatchObject({ success: false, missing: ["NEXT_PUBLIC_SENTRY_DSN"] });
+    expect(JSON.stringify(result)).not.toContain(dsn);
+  });
+
+  it.each(["NEXT_PUBLIC_AUTH_TOKEN", "NEXT_PUBLIC_DATABASE_URL", "NEXT_PUBLIC_OTHER_DSN", "NEXT_PUBLIC_SENTRY_AUTH_TOKEN"])("still rejects %s", (key) => {
+    expect(validateProductionEnv({ ...base, [key]: "private" }, { throwOnError: false })).toMatchObject({ success: false, missing: [key] });
+  });
   it("accepts a production deployment with public AI disabled", () => {
     expect(validateProductionEnv({ ...base, PUBLIC_AI_ENABLED: "false" }).PUBLIC_AI_ENABLED).toBe(false);
   });
