@@ -2,7 +2,7 @@
 
 ## Objectives and authority
 
-Owner decision recorded on 2026-10-12: the project owner assumes incident command, infrastructure, database, communications, and daily operational responsibility. Approved objectives are RPO 48 hours and RTO 4 hours. These are approved targets, not demonstrated recovery performance; objective verification remains **BLOCKED**.
+Owner decision recorded on 2026-10-12: the project owner assumes incident command, infrastructure, database, communications, and daily operational responsibility. Approved objectives are RPO 48 hours and RTO 4 hours. Snapshot freshness met the 48-hour objective at documented checkpoints; prepared-target recovery took 49.497 seconds. Neither is a guarantee of sustained RPO or full incident RTO. The owner accepted scoped Phase 11.2 closure with these limitations; full incident-RTO follow-up remains due 2026-11-11.
 
 The owner explicitly accepted a single-operator exception to independent two-person database review. The owner may review and authorize execution, but this must not be described as independent dual review. Before any Production database restore or connection switch, validate the restore in an isolated database, preserve the backup and rollback plan, and obtain a separate explicit execution approval from the owner. Approval of this exception does not authorize an actual restore, failover, or switch. Scope: owner-operated Production recovery while independent staffing is unavailable. Review this exception before each recovery and before expanding operational ownership; it expires for any operation whose preflight or explicit approval is missing.
 
