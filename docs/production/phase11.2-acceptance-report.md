@@ -94,13 +94,13 @@ Core HTTP smoke 的七项为：首页、Knowledge、Classics、health、Search�
 
 ## 五、最新备份恢复与 RPO/RTO
 
-备份来源：[Production encrypted backup #16](https://github.com/ColmanWang/xuanxiang-backup-ops/actions/runs/38178903299)，定时触发，上传成功。北京时间 2026-10-12 06:04:25–06:04:49；加密文件 96,895 字节。
+备份来源：Production encrypted backup #16（具体运行标识见私有运维记录），定时触发，上传成功。北京时间 2026-10-12 06:04:25–06:04:49；加密文件 96,895 字节。
 
 - 加密文件 SHA-256：48d55fb5ccbfed4db6bcdbcf43e4e06c9c1dff8633756468506804ec6446a7eb。
 - 原始归档 SHA-256：01d31c634f04c987f8087abf220d59304472023afbdf96e64fc60dc24a71ff92。
 - 冻结内容 checksum：sha256:af49f59fdda249ea6c5de9df863e5f5749dbcc70fc4b602251177e62db7d003b。
 
-恢复目标 rto_restore_20261012 在导入前确认与生产、staging、旧恢复库不同，用户对象为 0。使用 PostgreSQL 18、单事务、遇错退出、no-owner/no-acl、TLS verify-full；无 reset/clean。恢复后 6 条迁移、pgvector、内容校验及当前构建 Core smoke 7/7 通过。
+新建的独立空恢复数据库在导入前确认与生产、staging、旧恢复库不同，用户对象为 0。使用 PostgreSQL 18、单事务、遇错退出、no-owner/no-acl、TLS verify-full；无 reset/clean。恢复后 6 条迁移、pgvector、内容校验及当前构建 Core smoke 7/7 通过。
 
 计时为北京时间 **2026-10-12 17:42:58–17:43:47，49.497 秒**，包含下载、哈希、解密、导入、数据库/内容验证与本地生产模式 smoke。目标库和构建在计时前准备好。它**不包含事故发现、人员协调、资源创建、构建、公开部署/生产连接切换和流量恢复**，不是完整事故 RTO。
 

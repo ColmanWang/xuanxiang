@@ -2,7 +2,7 @@
 
 This manifest records the accepted staging content state for the scoped Phase 11.1 closure. It is not a database backup and does not approve a production launch.
 
-- Environment: `xuanxiang-staging` (Neon, pooled runtime connection)
+- Environment: isolated staging database (pooled runtime connection; resource identity retained privately)
 - Generated at: `2026-09-27T03:41:16.490Z`
 - Schema version: `1.0.0`
 - Checksum: `sha256:af49f59fdda249ea6c5de9df863e5f5749dbcc70fc4b602251177e62db7d003b`
