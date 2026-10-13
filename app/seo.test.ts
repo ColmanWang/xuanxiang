@@ -62,10 +62,12 @@ describe("public site discovery", () => {
     expect(urls).not.toContain(`${process.env.APP_URL ?? "http://localhost:3000"}/ask`);
   });
 
-  it("publishes the accepted privacy contact, retention, and request process", () => {
+  it("keeps maintainer identity private while retaining data-request and retention disclosures", () => {
     const html = renderToStaticMarkup(createElement(PrivacyPage));
 
-    expect(html).toContain("colmanwang.001@gmail.com");
+    expect(html).not.toMatch(/mailto:|[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
+    expect(html).not.toMatch(/colmanwang|wangrenxiang|198003318|2029143369|users\.noreply\.github\.com/i);
+    expect(html).toContain("公开联系渠道尚未设置");
     expect(html).toContain("30 天");
     expect(html).toContain("访问、更正或删除");
     expect(html).toContain("个人非商业 GitHub 项目");
